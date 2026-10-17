@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { dayLabel, delayLabel, hhmm, type Journey, type JourneyResult, type Leg } from "./api";
-import { lineStyle } from "./lines";
-import { ModeIcon } from "./modeIcons";
-import { PlaceIcon } from "./PlaceIcon";
+import { dayLabel, delayLabel, hhmm, type Journey, type JourneyResult, type Leg } from "../../lib/api";
+import { lineStyle } from "../../lib/lines";
+import { ModeIcon } from "../icons/modeIcons";
+import { PlaceIcon } from "../icons/PlaceIcon";
 
 const legMinutes = (l: Leg) => Math.max(1, Math.round((Date.parse(l.arr) - Date.parse(l.dep)) / 60000));
 const fmtDistance = (m?: number | null) => (m == null ? "" : m >= 1000 ? `${(m / 1000).toFixed(1).replace(".", ",")} km` : `${Math.round(m / 10) * 10} m`);

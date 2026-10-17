@@ -1,8 +1,8 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { fetchPlaces, stationPlace, type Place, type PlaceResult } from "./api";
-import { searchStations, type Indexed } from "./search";
-import { lineStyle } from "./lines";
-import { PlaceGlyph, PlaceIcon } from "./PlaceIcon";
+import { fetchPlaces, stationPlace, type Place, type PlaceResult } from "../../lib/api";
+import { searchStations, type Indexed } from "../../lib/search";
+import { lineStyle } from "../../lib/lines";
+import { PlaceGlyph, PlaceIcon } from "../icons/PlaceIcon";
 
 type Props = {
   id: string;

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { delayLabel, fetchDepartures, hhmm, type DepartureResult, type Station } from "./api";
-import { lineStyle } from "./lines";
-import { ModeIcon } from "./modeIcons";
-import { P } from "./api";
-import { MODES } from "./modes";
+import { delayLabel, fetchDepartures, hhmm, type DepartureResult, type Station } from "../../lib/api";
+import { lineStyle } from "../../lib/lines";
+import { ModeIcon } from "../icons/modeIcons";
+import { P } from "../../lib/api";
+import { MODES } from "../../lib/modes";
 
 const SERVED = [["subway", P.subway], ["suburban", P.suburban], ["regional", P.regional], ["tram", P.tram], ["bus", P.bus], ["ferry", P.ferry]] as const;
 

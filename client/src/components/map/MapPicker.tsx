@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
-import { fetchReverse, type Place } from "./api";
+import { fetchReverse, type Place } from "../../lib/api";
 
 /** Right-click (long-press on phones) anywhere on the map: "Route from here" / "Route to here". */
 export function MapPicker({ onPick }: { onPick: (end: "from" | "to", p: Place) => void }) {

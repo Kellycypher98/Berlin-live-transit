@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
-import type { MapLine } from "./api";
-import { lineStyle } from "./lines";
-import { modeOf, type ModeKey } from "./modes";
+import type { MapLine } from "../../lib/api";
+import { lineStyle } from "../../lib/lines";
+import { modeOf, type ModeKey } from "../../lib/modes";
 
 /** none: normal map · journey: a route is shown · focus: tracking, the rest nearly disappears */
 export type Fade = "none" | "journey" | "focus";

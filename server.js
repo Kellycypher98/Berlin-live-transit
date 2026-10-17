@@ -252,7 +252,7 @@ function tick() {
 // --- HTTP: API + the built React app (client/dist) ---
 const DIST = fileURLToPath(new URL("./client/dist/", import.meta.url));
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css",
-  ".svg": "image/svg+xml", ".png": "image/png", ".json": "application/json", ".ico": "image/x-icon" };
+  ".svg": "image/svg+xml", ".png": "image/png", ".json": "application/json", ".ico": "image/x-icon", ".webmanifest": "application/manifest+json" };
 
 const server = http.createServer(async (req, res) => {
   const path = new URL(req.url, "http://x").pathname;

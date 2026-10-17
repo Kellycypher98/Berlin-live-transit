@@ -1,10 +1,10 @@
 import { useEffect, useRef } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
-import type { Vehicle } from "./types";
-import { colorOf, modeOf, type ModeKey } from "./modes";
-import { drawBadge, roundRect } from "./modeIcons";
-import { lineStyle } from "./lines";
+import type { Vehicle } from "../../lib/types";
+import { colorOf, modeOf, type ModeKey } from "../../lib/modes";
+import { drawBadge, roundRect } from "../icons/modeIcons";
+import { lineStyle } from "../../lib/lines";
 
 type Tracked = {
   v: Vehicle;

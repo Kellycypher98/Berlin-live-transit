@@ -1,6 +1,6 @@
-import type { Place } from "./api";
+import type { Place } from "../../lib/api";
 import { ModeIcon } from "./modeIcons";
-import { P } from "./api";
+import { P } from "../../lib/api";
 
 /** Pin for addresses, flag for points of interest, target for "my location". */
 export function PlaceIcon({ kind, size = 18 }: { kind: Place["kind"] | "walk"; size?: number }) {

@@ -1,21 +1,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, ZoomControl } from "react-leaflet";
-import { useLiveVehicles } from "./useLiveVehicles";
-import { useStations } from "./useStations";
-import { VehicleLayer } from "./VehicleLayer";
-import { StationsLayer } from "./StationsLayer";
-import { LinesLayer } from "./LinesLayer";
-import { useLines } from "./useLines";
-import { JourneyLayer, FlyTo } from "./JourneyLayer";
-import { ControlPanel } from "./ControlPanel";
-import { SearchPanel } from "./SearchPanel";
-import { MODES, modeOf, type ModeKey } from "./modes";
-import { fetchJourneys, placeKey, type JourneyResult, type Place, type Station } from "./api";
-import { MapPicker, PlacePins, FocusMode } from "./MapPicker";
-import { choiceToIso, defaultChoice, type TimeChoice } from "./TimePicker";
-import { useTracking, type Tracking } from "./useTracking";
-import { TrackedVehicle } from "./TrackedVehicle";
-import { LoadingScreen } from "./LoadingScreen";
+import { useLiveVehicles } from "./hooks/useLiveVehicles";
+import { useStations } from "./hooks/useStations";
+import { VehicleLayer } from "./components/map/VehicleLayer";
+import { StationsLayer } from "./components/map/StationsLayer";
+import { LinesLayer } from "./components/map/LinesLayer";
+import { useLines } from "./hooks/useLines";
+import { JourneyLayer, FlyTo } from "./components/map/JourneyLayer";
+import { ControlPanel } from "./components/layout/ControlPanel";
+import { SearchPanel } from "./components/search/SearchPanel";
+import { MODES, modeOf, type ModeKey } from "./lib/modes";
+import { fetchJourneys, placeKey, type JourneyResult, type Place, type Station } from "./lib/api";
+import { MapPicker, PlacePins, FocusMode } from "./components/map/MapPicker";
+import { choiceToIso, defaultChoice, type TimeChoice } from "./components/search/TimePicker";
+import { useTracking, type Tracking } from "./hooks/useTracking";
+import { TrackedVehicle } from "./components/map/TrackedVehicle";
+import { LoadingScreen } from "./components/layout/LoadingScreen";
+import { LocateButton } from "./components/nearby/LocateButton";
+import { NearbyLayer } from "./components/nearby/NearbyLayer";
+import { nearestStations } from "./lib/nearby";
+import { useMyLocation } from "./hooks/useMyLocation";
 
 const BERLIN_CENTER: [number, number] = [52.5163, 13.3777];
 
@@ -123,6 +127,10 @@ export function App() {
       return next;
     });
 
+  // "Near me": your position and the closest stations
+  const loc = useMyLocation();
+  const near = useMemo(() => (loc.me && stations.length ? nearestStations(stations, loc.me) : []), [loc.me, stations]);
+
   const highlight = [from?.station, to?.station, station?.i].filter((x): x is number => x != null);
   const journey = tracking ? tracking.journey : !station ? result?.journeys?.[selected] ?? null : null;
 
@@ -138,11 +146,13 @@ export function App() {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors · VBB'
         />
         <ZoomControl position="topright" />
+        {loc.on && <LocateButton on={loc.on} locating={loc.locating} onClick={loc.start} />}
         {showLines && <LinesLayer lines={mapLines} enabled={enabled} fade={tracking ? "focus" : journey ? "journey" : "none"} />}
         <JourneyLayer journey={journey} activeLeg={tracking ? tracked.legIndex : null} fit={!tracking} />
         <StationsLayer stations={stations} highlight={highlight} onSelect={s => setStation(s)} faded={!!tracking} />
         <VehicleLayer vehicles={vehicles} interval={snapshot?.interval ?? 10000} enabled={enabled} dimmed={!!tracking} />
         {tracking && <TrackedVehicle data={tracked.data} follow={follow} onUnfollow={() => setFollow(false)} />}
+        <NearbyLayer me={loc.me} near={tracking ? [] : near} recenter={loc.recenter} onSelect={s => setStation(s)} />
         <FlyTo target={flyTarget} />
         <PlacePins from={from} to={to} />
         <MapPicker onPick={onMapPick} />
@@ -177,6 +187,9 @@ export function App() {
         } : null}
         station={station}
         onCloseStation={() => setStation(null)}
+        nearby={loc.on ? { near, locating: loc.locating, onSelect: (s: Station) => setStation(s), onClose: loc.stop } : null}
+        nearbyError={loc.error}
+        onNearMe={loc.start}
       />
 
       <ControlPanel state={state} snapshot={snapshot} counts={counts} enabled={enabled} onToggle={toggle}

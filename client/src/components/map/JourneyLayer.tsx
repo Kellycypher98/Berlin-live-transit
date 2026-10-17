@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
-import type { Journey } from "./api";
-import { lineStyle } from "./lines";
+import type { Journey } from "../../lib/api";
+import { lineStyle } from "../../lib/lines";
 
 /** Draws the selected journey: coloured lines per ride, dashed grey for walks. Fits the map to it. */
 export function JourneyLayer({ journey, activeLeg = null, fit = true }: { journey: Journey | null; activeLeg?: number | null; fit?: boolean }) {

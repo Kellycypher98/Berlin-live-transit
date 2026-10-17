@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchTrack, type Journey, type Leg, type TrackState } from "./api";
+import { fetchTrack, type Journey, type Leg, type TrackState } from "../lib/api";
 
 export type Tracking = { journey: Journey; leg: number | null }; // leg = index into journey.legs; null = follow the journey automatically
 

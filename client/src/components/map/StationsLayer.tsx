@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
-import { P, isRail, type Station } from "./api";
+import { P, isRail, type Station } from "../../lib/api";
 
 type Props = {
   stations: Station[];

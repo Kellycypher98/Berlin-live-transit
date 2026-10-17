@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchStations, type Station } from "./api";
-import { buildSearchIndex } from "./search";
+import { fetchStations, type Station } from "../lib/api";
+import { buildSearchIndex } from "../lib/search";
 
 /** Loads all stations once; retries while the server is still building its timetable. */
 export function useStations() {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchLines, type MapLine } from "./api";
+import { fetchLines, type MapLine } from "../lib/api";
 
 /** Loads the network map once; retries while the server is still building its timetable. */
 export function useLines() {

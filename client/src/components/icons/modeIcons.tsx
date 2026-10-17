@@ -2,7 +2,7 @@
 // U and S follow Berlin's station signage (blue square U, green circle S);
 // tram, bus, regional train and ferry use simple pictograms drawn for this app.
 
-import { MODES, modeOf, type ModeKey } from "./modes";
+import { MODES, modeOf, type ModeKey } from "../../lib/modes";
 
 type Badge = { shape: "square" | "circle"; text?: string; path?: string };
 

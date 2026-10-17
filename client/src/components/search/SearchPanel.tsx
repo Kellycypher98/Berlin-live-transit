@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { fetchReverse, placeKey, stationPlace, type JourneyResult, type Place, type Station } from "./api";
-import type { Indexed } from "./search";
+import { fetchReverse, placeKey, stationPlace, type JourneyResult, type Place, type Station } from "../../lib/api";
+import type { Indexed } from "../../lib/search";
 import { PlaceInput } from "./PlaceInput";
-import { PlaceIcon } from "./PlaceIcon";
-import { JourneyList } from "./JourneyList";
-import { StationCard } from "./StationCard";
+import { PlaceIcon } from "../icons/PlaceIcon";
+import { JourneyList } from "../journeys/JourneyList";
+import { StationCard } from "../stations/StationCard";
 import { TimePicker, type TimeChoice } from "./TimePicker";
-import { TrackPanel } from "./TrackPanel";
+import { TrackPanel } from "../tracking/TrackPanel";
 import type { ComponentProps } from "react";
+import { NearbyList } from "../nearby/NearbyList";
+import type { NearStation } from "../../lib/nearby";
 
 type Props = {
   stations: Station[];
@@ -33,6 +35,9 @@ type Props = {
   refreshing: boolean;
   fetchedAt: number | null;
   tracking: ComponentProps<typeof TrackPanel> | null;
+  nearby: { near: NearStation[]; locating: boolean; onSelect: (s: Station) => void; onClose: () => void } | null;
+  nearbyError: string | null;
+  onNearMe: () => void;
 };
 
 export function SearchPanel(p: Props) {
@@ -105,8 +110,18 @@ export function SearchPanel(p: Props) {
               onTrack={p.onTrack} onRefresh={p.onRefresh} refreshing={p.refreshing} fetchedAt={p.fetchedAt} />
           )
         )}
-        {!p.result && !p.loading && !p.station && !p.error && ready && (
-          <p className="muted small hint">Search any address, place or station. Tap a station for its departures, or right-click (long-press) the map to route from or to that spot.</p>
+        {p.nearbyError && <p className="err small">{p.nearbyError}</p>}
+        {p.nearby && !p.tracking && !p.station && !p.result && !p.loading && (
+          <NearbyList {...p.nearby} onFrom={s => p.setFrom(stationPlace(s))} />
+        )}
+        {!p.nearby && !p.tracking && !p.result && !p.loading && !p.station && ready && (
+          <>
+            <button className="near-me-btn" onClick={p.onNearMe}>
+              <PlaceIcon kind="location" size={18} />
+              <span>Stations near me</span>
+            </button>
+            {!p.error && <p className="muted small hint">Search any address, place or station. Tap a station for its departures, or right-click (long-press) the map to route from or to that spot.</p>}
+          </>
         )}
       </div>
     </aside>

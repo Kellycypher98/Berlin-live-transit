@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { ConnectionState, Snapshot } from "./types";
+import type { ConnectionState, Snapshot } from "../lib/types";
 
 /** Subscribes to the server's /live WebSocket and reconnects with backoff. */
 export function useLiveVehicles() {

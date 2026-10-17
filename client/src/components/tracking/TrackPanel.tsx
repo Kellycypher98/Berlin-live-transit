@@ -1,7 +1,7 @@
-import { delayLabel, hhmm, type Journey, type Leg, type TrackState } from "./api";
-import { boardAlight } from "./useTracking";
-import { lineStyle } from "./lines";
-import { ModeIcon } from "./modeIcons";
+import { delayLabel, hhmm, type Journey, type Leg, type TrackState } from "../../lib/api";
+import { boardAlight } from "../../hooks/useTracking";
+import { lineStyle } from "../../lib/lines";
+import { ModeIcon } from "../icons/modeIcons";
 
 type Props = {
   journey: Journey;

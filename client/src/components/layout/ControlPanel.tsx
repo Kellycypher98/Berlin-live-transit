@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { MODES, type ModeKey } from "./modes";
-import { ModeIcon } from "./modeIcons";
-import type { ConnectionState, Snapshot } from "./types";
+import { MODES, type ModeKey } from "../../lib/modes";
+import { ModeIcon } from "../icons/modeIcons";
+import type { ConnectionState, Snapshot } from "../../lib/types";
+import logo from "../../assets/logo-128.png";
 
 type Props = {
   state: ConnectionState;
@@ -30,7 +31,10 @@ export function ControlPanel({ state, snapshot, counts, enabled, onToggle, showL
   return (
     <aside className={`panel ${open ? "" : "collapsed"}`}>
       <button className="panel-head" onClick={() => setOpen(o => !o)} aria-expanded={open}>
-        <span className={`live ${state === "open" ? "on" : ""}`} aria-hidden />
+        <span className="brand" aria-hidden>
+          <img src={logo} alt="" width={24} height={24} />
+          <span className={`live ${state === "open" ? "on" : ""}`} />
+        </span>
         <span className="title">Berlin Live Transit</span>
         <span className="count">{snapshot?.updatedAt ? `${snapshot.vehicles.length}` : ""}</span>
         <span className="chev" aria-hidden>{open ? "▾" : "▸"}</span>

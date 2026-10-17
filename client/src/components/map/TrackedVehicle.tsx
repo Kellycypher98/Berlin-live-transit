@@ -1,10 +1,10 @@
 import { useEffect, useRef } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
-import type { TrackState } from "./api";
-import { lineStyle } from "./lines";
-import { BADGES, modeColor } from "./modeIcons";
-import { modeOf } from "./modes";
+import type { TrackState } from "../../lib/api";
+import { lineStyle } from "../../lib/lines";
+import { BADGES, modeColor } from "../icons/modeIcons";
+import { modeOf } from "../../lib/modes";
 
 const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 

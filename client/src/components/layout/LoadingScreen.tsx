@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import type { ConnectionState, Snapshot } from "./types";
+import type { ConnectionState, Snapshot } from "../../lib/types";
+import logo from "../../assets/logo-128.png";
 
 type Props = {
   state: ConnectionState;
@@ -49,6 +50,7 @@ export function LoadingScreen({ state, snapshot, stationsReady, linesReady }: Pr
       {!gone && (
         <div className={`loading-screen ${open ? "" : "out"}`} role="status" aria-live="polite" aria-busy={open}>
           <div className="loading-card">
+            <img className="loading-logo" src={logo} alt="" width={64} height={64} />
             <div className="loading-mark" aria-hidden>
               <span /><span /><span />
             </div>

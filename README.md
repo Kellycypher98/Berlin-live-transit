@@ -48,12 +48,20 @@ Requires Node 18+.
 
 ```
 server.js              merges all sources -> positions, pushed over /live; serves client/dist
-client/
-  src/App.tsx          map + state
-  src/VehicleLayer.tsx Leaflet markers, smooth movement between updates
-  src/ControlPanel.tsx mode toggles, counts, connection status
-  src/useLiveVehicles.ts  WebSocket hook with reconnect
-  src/modes.ts         transport modes and colors
+client/src/
+  App.tsx              map + app state
+  components/
+    map/               map layers: vehicles, stations, line map, journey, tracked vehicle, map picker
+    search/            search panel, place input, time picker
+    journeys/          connection results
+    stations/          station card (departures)
+    tracking/          live tracking panel
+    nearby/            "Stations near me": list, map blips, back-to-me button
+    layout/            layers panel, loading screen
+    icons/             mode badges and place icons
+  hooks/               live vehicles (WebSocket), stations, lines, tracking, my location
+  lib/                 API client + types, line colours, modes, station search, nearby maths
+  assets/              logo
 lib/
   timetable.js         downloads + indexes the GTFS timetable
   realtime.js          reads GTFS-Realtime delays
