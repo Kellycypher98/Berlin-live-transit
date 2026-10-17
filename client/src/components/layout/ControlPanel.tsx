@@ -40,7 +40,7 @@ export function ControlPanel({ state, snapshot, counts, enabled, onToggle, showL
       <button className="panel-head" onClick={() => setOpen(o => !o)} aria-expanded={open}>
         <span className="brand" aria-hidden>
           <img src={logo} alt="" width={24} height={24} />
-          <span className={`live ${state === "open" ? "on" : ""}`} />
+          <span className={`live-dot ${state === "open" ? "on" : ""}`} />
         </span>
         <span className="title">Berlin Live Transit</span>
         <span className="count">{snapshot?.updatedAt ? `${snapshot.vehicles.length}` : ""}</span>

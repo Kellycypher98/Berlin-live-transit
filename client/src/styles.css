@@ -9,6 +9,9 @@
 }
 
 html, body, #root { height: 100%; margin: 0; }
+/* The map is the whole screen: no page scrolling or rubber-band bounce revealing gaps (the admin page re-enables scrolling) */
+html, body { overflow: hidden; overscroll-behavior: none; }
+body { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body { background: var(--bg); color: var(--fg); font-family: var(--font); font-feature-settings: "tnum"; } /* tabular figures everywhere, so times and counts line up */
 
 .map { position: fixed; inset: 0; }
@@ -39,8 +42,8 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font); font-f
 .panel-head .title { flex: 1; }
 .panel-head .count { font: 500 11px var(--mono); color: var(--muted); }
 .panel-head .chev { color: var(--muted); font-size: 12px; }
-.live { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
-.live.on { background: var(--ok); }
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.live-dot.on { background: var(--ok); }
 
 .modes { display: flex; flex-wrap: wrap; gap: 6px; }
 .mode {
@@ -127,7 +130,7 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font); font-f
 
 /* ---------- journeys ---------- */
 .journeys { display: grid; gap: 8px; }
-.source-note { margin: 0; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.source-note { flex-shrink: 0; margin: 0; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; white-space: nowrap; }
 .source-note::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--warn); }
 .source-note.live::before { background: var(--ok); }
 .journey-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
@@ -179,8 +182,15 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font); font-f
 
 /* ---------- phones ---------- */
 @media (max-width: 720px) {
-  .search-panel { left: 8px; right: 8px; top: max(8px, env(safe-area-inset-top)); width: auto; max-height: 55%; }
+  .search-panel { left: 8px; right: 8px; top: max(8px, env(safe-area-inset-top)); width: auto; max-height: 62%; max-height: 62dvh; }
+  .search-panel.is-tracking .search-form { display: none; } /* tracking: the ride gets the room; "Stop" brings the search back */
   .panel { left: 8px; right: 8px; width: auto; bottom: calc(max(8px, env(safe-area-inset-bottom)) + 16px); }
+  /* Opened layers panel: a sheet above the search panel, scrollable if the screen is short */
+  .panel:not(.collapsed) {
+    z-index: 1002; overflow: auto; overscroll-behavior: contain;
+    max-height: calc(100dvh - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom)) - 24px);
+  }
+  .hint { display: none; } /* the first-use tour explains this on phones */
   .leaflet-top.leaflet-right { top: auto; bottom: 90px; }
 }
 
@@ -218,7 +228,8 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font); font-f
 
 
 /* Results header + paging */
-.results-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.results-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 8px; }
+.panel-body > *, .journeys > * { min-width: 0; } /* long rows wrap instead of pushing past the panel edge */
 .when-text { font: 700 13px var(--font); }
 .page-btn { width: 100%; padding: 6px; font-size: 12px; color: var(--muted); }
 .j-day { font: 600 12px var(--font); color: var(--muted); }
@@ -247,7 +258,8 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font); font-f
 .track-status.wait { border-left-color: var(--warn); }
 .track-status.ride { border-left-color: var(--u, #115d91); }
 .track-status.bad { border-left-color: var(--err); }
-.track-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.track-meta { display: flex; align-items: center; gap: 4px 10px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.track-meta > * { flex-shrink: 0; white-space: nowrap; }
 .track-meta .src.live { color: var(--ok); font-weight: 600; }
 .track-meta .late-txt { color: var(--err); font-weight: 600; }
 .track-meta .ok-txt { color: var(--ok); font-weight: 600; }
@@ -359,6 +371,7 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font); font-f
 .loading-skip { margin-top: 16px; justify-self: start; }
 
 .loading-pill {
+  z-index: 999 !important; /* under the panels, never on top of their text */
   position: fixed; z-index: 1100; left: 50%; transform: translateX(-50%);
   top: max(12px, env(safe-area-inset-top));
   display: flex; align-items: center; gap: 8px; padding: 6px 12px;
@@ -423,7 +436,7 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font); font-f
 .loading-logo { width: 64px; height: 64px; border-radius: 16px; margin-bottom: 14px; box-shadow: 0 6px 18px rgb(0 0 0 / .18); }
 .brand { position: relative; flex: none; display: grid; }
 .brand img { width: 24px; height: 24px; border-radius: 6px; display: block; }
-.brand .live { position: absolute; right: -3px; bottom: -3px; border: 2px solid var(--bg); }
+.brand .live-dot { position: absolute; right: -3px; bottom: -3px; border: 2px solid var(--bg); }
 .near-me-btn {
   display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
   height: 40px; border-radius: 10px; border: 1px solid color-mix(in srgb, #1a73e8 35%, var(--line));
@@ -482,3 +495,9 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font); font-f
 .install-steps li { line-height: 1.5; }
 .inline-icon { vertical-align: -3px; color: #1a73e8; }
 @media (prefers-color-scheme: dark) { .inline-icon { color: #7fb0ff; } }
+
+/* Touch screens: 16px text in fields, otherwise iPhones zoom into the page when a field is tapped
+   and the page stays zoomed (map no longer fills the screen, panels overlap) */
+@media (pointer: coarse) {
+  input, select, textarea { font-size: 16px !important; }
+}

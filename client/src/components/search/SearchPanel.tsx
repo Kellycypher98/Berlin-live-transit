@@ -66,7 +66,7 @@ export function SearchPanel(p: Props) {
   };
 
   return (
-    <aside className="search-panel">
+    <aside className={`search-panel ${p.tracking ? "is-tracking" : ""}`}>
       <form className="search-form" onSubmit={e => e.preventDefault()}>
         <PlaceInput
           id="from" label={t("From")} placeholder={ready ? t("Address, place or station") : t("Loading stations…")}
