@@ -234,4 +234,6 @@ export const de: Record<string, string> = {
   "Choose \"Add to Home Screen\"": "Wähle „Zum Home-Bildschirm“",
   "Open your browser menu (⋮ or ⋯) and choose \"Install app\" or \"Add to Home Screen\".": "Öffne das Browsermenü (⋮ oder ⋯) und wähle „App installieren“ oder „Zum Startbildschirm hinzufügen“.",
   "Add to Home Screen": "Zum Home-Bildschirm",
+  "Hide stops": "Halte ausblenden",
+  "Show all {n} stops": "Alle {n} Halte zeigen",
 };

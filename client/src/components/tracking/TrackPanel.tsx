@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { delayLabel, hhmm, type Journey, type Leg, type TrackState } from "../../lib/api";
 import { boardAlight } from "../../hooks/useTracking";
 import { lineStyle } from "../../lib/lines";
@@ -58,6 +59,10 @@ export function TrackPanel({ journey, legIndex, leg, data, error, follow, onFoll
   const st = leg && data ? status(leg, data) : null;
   const range = leg && data ? boardAlight(leg, data) : null;
 
+  // Phones: the stop list starts folded so the map (and your vehicle) stays visible
+  const [showStops, setShowStops] = useState(() => !matchMedia("(max-width: 720px)").matches);
+  const stopCount = range ? range.alight - range.board + 1 : 0;
+
   return (
     <section className="track-panel" aria-live="polite">
       <header className="track-head">
@@ -102,6 +107,11 @@ export function TrackPanel({ journey, legIndex, leg, data, error, follow, onFoll
           </div>
 
           {range && (
+            <button className="stops-toggle track-stops-toggle" onClick={() => setShowStops(v => !v)} aria-expanded={showStops}>
+              {t(showStops ? "Hide stops" : "Show all {n} stops", { n: stopCount })} {showStops ? "▴" : "▾"}
+            </button>
+          )}
+          {range && showStops && (
             <ol className="track-stops">
               {data.stops.map((s, i) => {
                 if (i < range.board || i > range.alight) return null;

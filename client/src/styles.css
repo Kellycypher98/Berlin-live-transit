@@ -183,7 +183,8 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font); font-f
 /* ---------- phones ---------- */
 @media (max-width: 720px) {
   .search-panel { left: 8px; right: 8px; top: max(8px, env(safe-area-inset-top)); width: auto; max-height: 62%; max-height: 62dvh; }
-  .search-panel.is-tracking .search-form { display: none; } /* tracking: the ride gets the room; "Stop" brings the search back */
+  .search-panel.is-tracking .search-form { display: none; }
+  .search-panel.is-tracking { max-height: 46%; max-height: 46dvh; } /* leave most of the screen to the map */ /* tracking: the ride gets the room; "Stop" brings the search back */
   .panel { left: 8px; right: 8px; width: auto; bottom: calc(max(8px, env(safe-area-inset-bottom)) + 16px); }
   /* Opened layers panel: a sheet above the search panel, scrollable if the screen is short */
   .panel:not(.collapsed) {
@@ -501,3 +502,4 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font); font-f
 @media (pointer: coarse) {
   input, select, textarea { font-size: 16px !important; }
 }
+.track-stops-toggle { justify-self: start; }
