@@ -15,6 +15,7 @@ import { MapPicker, PlacePins, FocusMode } from "./MapPicker";
 import { choiceToIso, defaultChoice, type TimeChoice } from "./TimePicker";
 import { useTracking, type Tracking } from "./useTracking";
 import { TrackedVehicle } from "./TrackedVehicle";
+import { LoadingScreen } from "./LoadingScreen";
 
 const BERLIN_CENTER: [number, number] = [52.5163, 13.3777];
 
@@ -180,6 +181,8 @@ export function App() {
 
       <ControlPanel state={state} snapshot={snapshot} counts={counts} enabled={enabled} onToggle={toggle}
         showLines={showLines} onShowLines={setShowLines} linesReady={mapLines.length > 0} />
+
+      <LoadingScreen state={state} snapshot={snapshot} stationsReady={stations.length > 0} linesReady={mapLines.length > 0} />
     </>
   );
 }

@@ -321,3 +321,57 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font); }
 .pick-popup { display: grid; gap: 6px; min-width: 150px; font-family: var(--font); }
 .pick-title { font-weight: 700; font-size: 13px; }
 @media (prefers-reduced-motion: reduce) { .mini-spin { animation: none; } }
+
+/* Loading: full-screen until vehicles arrive, then a small pill while the rest loads */
+.loading-screen {
+  position: fixed; inset: 0; z-index: 3000;
+  display: grid; place-items: center; padding: 16px;
+  background: var(--bg);
+  transition: opacity .4s ease, visibility .4s;
+}
+.loading-screen.out { opacity: 0; visibility: hidden; pointer-events: none; }
+.loading-card { width: min(340px, 100%); display: grid; gap: 6px; }
+.loading-card h1 { margin: 14px 0 0; font: 700 26px/1.1 var(--font); letter-spacing: -.01em; }
+.loading-sub { margin: 0 0 14px; color: var(--muted); font-size: 15px; }
+/* Three line-coloured bars running like trains */
+.loading-mark { display: grid; gap: 6px; width: 64px; }
+.loading-mark span { height: 6px; border-radius: 3px; background: var(--line); position: relative; overflow: hidden; }
+.loading-mark span::after {
+  content: ""; position: absolute; inset: 0; width: 40%; border-radius: 3px;
+  animation: loading-run 1.4s ease-in-out infinite;
+}
+.loading-mark span:nth-child(1)::after { background: #e2001a; }
+.loading-mark span:nth-child(2)::after { background: #008d4f; animation-delay: .18s; }
+.loading-mark span:nth-child(3)::after { background: #0065ae; animation-delay: .36s; }
+@keyframes loading-run { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+
+.loading-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; font-size: 15px; }
+.loading-steps li { display: flex; gap: 10px; align-items: flex-start; color: var(--muted); }
+.loading-steps li.active, .loading-steps li.done { color: var(--fg); }
+.loading-steps small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+.loading-steps .dot {
+  flex: none; width: 14px; height: 14px; margin-top: 2px; box-sizing: border-box;
+  border-radius: 50%; border: 2px solid var(--line);
+}
+.loading-steps .active .dot { border-color: var(--fg); border-top-color: transparent; animation: spin .8s linear infinite; }
+.loading-steps .done .dot { border-color: var(--ok); background: var(--ok); box-shadow: inset 0 0 0 2px var(--bg); }
+.loading-error { margin: 12px 0 0; color: var(--err); font-size: 14px; }
+.loading-skip { margin-top: 16px; justify-self: start; }
+
+.loading-pill {
+  position: fixed; z-index: 1100; left: 50%; transform: translateX(-50%);
+  top: max(12px, env(safe-area-inset-top));
+  display: flex; align-items: center; gap: 8px; padding: 6px 12px;
+  background: var(--panel); backdrop-filter: blur(8px);
+  border: 1px solid var(--line); border-radius: 999px;
+  font: 500 13px var(--font); color: var(--fg); white-space: nowrap;
+}
+.spinner {
+  width: 12px; height: 12px; box-sizing: border-box; border-radius: 50%;
+  border: 2px solid var(--line); border-top-color: var(--fg); animation: spin .8s linear infinite;
+}
+@media (max-width: 720px) { .loading-pill { top: auto; bottom: calc(max(12px, env(safe-area-inset-bottom)) + 70px); } }
+@media (prefers-reduced-motion: reduce) {
+  .loading-screen { transition: none; }
+  .loading-mark span::after, .loading-steps .active .dot, .spinner { animation: none; }
+}
