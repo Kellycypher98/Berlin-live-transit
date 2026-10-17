@@ -225,4 +225,13 @@ export const de: Record<string, string> = {
   "Show me": "Los geht's",
   "Got it": "Verstanden",
   "How it works": "So funktioniert's",
+  // ---------- add to home screen ----------
+  "Add it to your home screen": "Auf den Home-Bildschirm legen",
+  "Open it like an app: full screen, one tap away.": "Öffne sie wie eine App: im Vollbild, nur einen Tipp entfernt.",
+  "Install app": "App installieren",
+  "Tap Share": "Tippe auf Teilen",
+  "in the browser bar": "in der Browserleiste",
+  "Choose \"Add to Home Screen\"": "Wähle „Zum Home-Bildschirm“",
+  "Open your browser menu (⋮ or ⋯) and choose \"Install app\" or \"Add to Home Screen\".": "Öffne das Browsermenü (⋮ oder ⋯) und wähle „App installieren“ oder „Zum Startbildschirm hinzufügen“.",
+  "Add to Home Screen": "Zum Home-Bildschirm",
 };

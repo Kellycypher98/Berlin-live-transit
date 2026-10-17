@@ -16,7 +16,7 @@ import { choiceToIso, defaultChoice, type TimeChoice } from "./components/search
 import { useTracking, type Tracking } from "./hooks/useTracking";
 import { TrackedVehicle } from "./components/map/TrackedVehicle";
 import { LoadingScreen } from "./components/layout/LoadingScreen";
-import { Tour, hasSeenTour } from "./components/onboarding/Tour";
+import { Tour, hasSeenTour, INSTALL_STEP } from "./components/onboarding/Tour";
 import { LocateButton } from "./components/nearby/LocateButton";
 import { NearbyLayer } from "./components/nearby/NearbyLayer";
 import { nearestStations } from "./lib/nearby";
@@ -136,6 +136,7 @@ export function App() {
 
   // First-use tour: once the map has loaded, unless it was seen before; can be replayed from the layers panel
   const [tourOpen, setTourOpen] = useState(false);
+  const [tourStart, setTourStart] = useState(0);
   const tourChecked = useRef(false);
   const appReady = stations.length > 0 && !!snapshot?.updatedAt;
   useEffect(() => {
@@ -208,9 +209,10 @@ export function App() {
       />
 
       <ControlPanel state={state} snapshot={snapshot} counts={counts} enabled={enabled} onToggle={toggle}
-        showLines={showLines} onShowLines={setShowLines} linesReady={mapLines.length > 0} onTour={() => setTourOpen(true)} />
+        showLines={showLines} onShowLines={setShowLines} linesReady={mapLines.length > 0} onTour={() => { setTourStart(0); setTourOpen(true); }}
+        onInstall={() => { setTourStart(INSTALL_STEP); setTourOpen(true); }} />
 
-      <Tour open={tourOpen} onClose={() => setTourOpen(false)} />
+      <Tour open={tourOpen} startAt={tourStart} onClose={() => setTourOpen(false)} />
       <LoadingScreen state={state} snapshot={snapshot} stationsReady={stations.length > 0} linesReady={mapLines.length > 0} />
     </>
   );

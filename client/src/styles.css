@@ -475,3 +475,10 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font); font-f
 .tour-replay:hover { color: var(--fg); text-decoration: underline; }
 .tour-replay:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; border-radius: 4px; }
 @media (prefers-reduced-motion: reduce) { .tour-spot { transition: none; } .tour-card { animation: none; } }
+.panel-links { display: flex; gap: 14px; flex-wrap: wrap; }
+.install-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 38px; font-weight: 700; }
+.install-btn img { border-radius: 5px; }
+.install-steps { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14px; }
+.install-steps li { line-height: 1.5; }
+.inline-icon { vertical-align: -3px; color: #1a73e8; }
+@media (prefers-color-scheme: dark) { .inline-icon { color: #7fb0ff; } }

@@ -4,6 +4,7 @@ import { ModeIcon } from "../icons/modeIcons";
 import type { ConnectionState, Snapshot } from "../../lib/types";
 import logo from "../../assets/logo-128.png";
 import { LANGS, useLang } from "../../i18n";
+import { useInstall } from "../../hooks/useInstall";
 
 type Props = {
   state: ConnectionState;
@@ -15,10 +16,12 @@ type Props = {
   onShowLines: (v: boolean) => void;
   linesReady: boolean;
   onTour: () => void;
+  onInstall: () => void;
 };
 
-export function ControlPanel({ state, snapshot, counts, enabled, onToggle, showLines, onShowLines, linesReady, onTour }: Props) {
+export function ControlPanel({ state, snapshot, counts, enabled, onToggle, showLines, onShowLines, linesReady, onTour, onInstall }: Props) {
   const { t, lang, setLang } = useLang();
+  const install = useInstall();
   const vehiclesText = (n: number) => t(n === 1 ? "1 vehicle" : "{n} vehicles", { n });
   let status: string;
   let isError = false;
@@ -86,7 +89,10 @@ export function ControlPanel({ state, snapshot, counts, enabled, onToggle, showL
           </li>
         </ul>
       )}
-      <button type="button" className="tour-replay" onClick={onTour}>{t("How it works")}</button>
+      <div className="panel-links">
+        <button type="button" className="tour-replay" onClick={onTour}>{t("How it works")}</button>
+        {!install.installed && <button type="button" className="tour-replay" onClick={onInstall}>{t("Add to Home Screen")}</button>}
+      </div>
       <div className="lang-switch" role="radiogroup" aria-label={t("Language")}>
         <span className="lang-label">{t("Language")}</span>
         {LANGS.map(l => (

@@ -3,6 +3,7 @@ import { t, useLang } from "../../i18n";
 import { ModeIcon } from "../icons/modeIcons";
 import { PlaceIcon } from "../icons/PlaceIcon";
 import logo from "../../assets/logo-128.png";
+import { useInstall } from "../../hooks/useInstall";
 
 const SEEN_KEY = "blt-tour-v1";
 
@@ -11,7 +12,7 @@ type Step = {
   target?: string;
   title: string;
   body: string;
-  visual?: "modes" | "logo" | "track";
+  visual?: "modes" | "logo" | "track" | "install";
 };
 
 const STEPS: Step[] = [
@@ -21,7 +22,9 @@ const STEPS: Step[] = [
   { target: ".near-me-btn", title: "Stations near you", body: "One tap shows the closest stops with walking times. Tap a stop for its next departures." },
   { title: "Track your ride live", body: "In any connection, tap \"Track this journey live\". The map follows your vehicle and tells you when to board and when to get off.", visual: "track" },
   { target: ".panel", title: "Choose what you see", body: "Switch transport types and the line map on or off, and change the language here." },
+  { title: "Add it to your home screen", body: "Open it like an app: full screen, one tap away.", visual: "install" },
 ];
+export const INSTALL_STEP = STEPS.length - 1;
 
 export function hasSeenTour() {
   try { return localStorage.getItem(SEEN_KEY) === "1"; } catch { return false; }
@@ -31,18 +34,21 @@ function markSeen() {
 }
 
 /** First-use walkthrough: highlights parts of the app one at a time. */
-export function Tour({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function Tour({ open, onClose, startAt = 0 }: { open: boolean; onClose: () => void; startAt?: number }) {
   useLang();
+  const install = useInstall();
+  // Already running as an installed app: no install step
+  const steps = install.installed ? STEPS.slice(0, INSTALL_STEP) : STEPS;
   const [step, setStep] = useState(0);
   const [rect, setRect] = useState<DOMRect | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const [cardPos, setCardPos] = useState<{ left: number; top: number } | null>(null);
-  const s = STEPS[step];
+  const s = steps[Math.min(step, steps.length - 1)];
 
-  useEffect(() => { if (open) setStep(0); }, [open]);
+  useEffect(() => { if (open) setStep(Math.min(startAt, steps.length - 1)); }, [open, startAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const finish = useCallback(() => { markSeen(); onClose(); }, [onClose]);
-  const next = useCallback(() => (step < STEPS.length - 1 ? setStep(step + 1) : finish()), [step, finish]);
+  const next = useCallback(() => (step < steps.length - 1 ? setStep(step + 1) : finish()), [step, steps.length, finish]);
   const back = () => setStep(Math.max(0, step - 1));
 
   // Find the highlighted element (and follow it on resize / scroll)
@@ -88,7 +94,7 @@ export function Tour({ open, onClose }: { open: boolean; onClose: () => void }) 
 
   if (!open) return null;
   const pad = 6;
-  const last = step === STEPS.length - 1;
+  const last = step === steps.length - 1;
 
   return (
     <div className="tour" role="dialog" aria-modal="true" aria-labelledby="tour-title">
@@ -109,10 +115,11 @@ export function Tour({ open, onClose }: { open: boolean; onClose: () => void }) 
         )}
         <h2 id="tour-title">{t(s.title)}</h2>
         <p>{t(s.body)}</p>
+        {s.visual === "install" && <InstallHelp install={install} onDone={finish} />}
         {s.target === ".near-me-btn" && !rect && <p className="muted small"><PlaceIcon kind="location" size={12} /> {t("You'll find it in the search panel.")}</p>}
         <div className="tour-foot">
-          <span className="tour-dots" aria-label={t("Step {n} of {total}", { n: step + 1, total: STEPS.length })}>
-            {STEPS.map((_, k) => <span key={k} className={k === step ? "on" : ""} />)}
+          <span className="tour-dots" aria-label={t("Step {n} of {total}", { n: step + 1, total: steps.length })}>
+            {steps.map((_, k) => <span key={k} className={k === step ? "on" : ""} />)}
           </span>
           {step === 0
             ? <button className="btn sm tour-skip" onClick={finish}>{t("Skip")}</button>
@@ -123,3 +130,35 @@ export function Tour({ open, onClose }: { open: boolean; onClose: () => void }) 
     </div>
   );
 }
+
+/** How to add the app to the home screen on this device. */
+function InstallHelp({ install, onDone }: { install: ReturnType<typeof useInstall>; onDone: () => void }) {
+  if (install.canPrompt) {
+    return (
+      <button className="btn install-btn" onClick={async () => { if (await install.prompt()) onDone(); }}>
+        <img src={logo} alt="" width={20} height={20} /> {t("Install app")}
+      </button>
+    );
+  }
+  if (install.isIOS) {
+    return (
+      <ol className="install-steps">
+        <li>{t("Tap Share")} <ShareIcon /> {t("in the browser bar")}</li>
+        <li>{t("Choose \"Add to Home Screen\"")} <AddIcon /></li>
+      </ol>
+    );
+  }
+  return <p className="muted small">{t("Open your browser menu (⋮ or ⋯) and choose \"Install app\" or \"Add to Home Screen\".")}</p>;
+}
+
+const ShareIcon = () => (
+  <svg className="inline-icon" width="16" height="16" viewBox="0 0 24 24" aria-label="Share" role="img">
+    <path d="M12 3v12M8 7l4-4 4 4M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+const AddIcon = () => (
+  <svg className="inline-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden>
+    <rect x="4" y="4" width="16" height="16" rx="4" fill="none" stroke="currentColor" strokeWidth="2" />
+    <path d="M12 8v8M8 12h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
