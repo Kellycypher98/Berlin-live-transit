@@ -1,4 +1,5 @@
 // Types and fetchers for the server's REST endpoints
+import { locale, t } from "../i18n";
 
 export type Station = { i: number; name: string; lat: number; lng: number; p: number; lines: string[] };
 
@@ -72,7 +73,7 @@ async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
   const res = await fetch(url, { signal });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || `Request failed (${res.status})`);
+    throw new Error(t(body.error || "Request failed ({status})", { status: res.status }));
   }
   // A cancelled or broken response must fail, never pass as an empty result
   return (await res.json()) as T;
@@ -98,14 +99,13 @@ const timeFmt = new Intl.DateTimeFormat("de-DE", { hour: "2-digit", minute: "2-d
 export const hhmm = (iso: string) => timeFmt.format(new Date(iso));
 
 const dayKey = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" });
-const dayFmt = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/Berlin" });
 /** "" for today, "Tomorrow" or e.g. "Sun 19 Oct" otherwise. */
 export function dayLabel(iso: string) {
   const d = new Date(iso);
   const k = dayKey.format(d);
   if (k === dayKey.format(new Date())) return "";
-  if (k === dayKey.format(new Date(Date.now() + 86400000))) return "Tomorrow";
-  return dayFmt.format(d);
+  if (k === dayKey.format(new Date(Date.now() + 86400000))) return t("Tomorrow");
+  return new Intl.DateTimeFormat(locale(), { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/Berlin" }).format(d);
 }
 
 export function delayLabel(delay: number | null | undefined) {

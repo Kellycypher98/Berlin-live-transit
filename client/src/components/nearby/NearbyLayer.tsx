@@ -3,10 +3,12 @@ import { useMap } from "react-leaflet";
 import L from "leaflet";
 import { isRail, type Station } from "../../lib/api";
 import { walkMin, type Me, type NearStation } from "../../lib/nearby";
+import { t, useLang } from "../../i18n";
 
 /** Your position (blue dot + accuracy ring) and a pulsing blip on each nearby station. */
 export function NearbyLayer({ me, near, recenter, onSelect }: { me: Me | null; near: NearStation[]; recenter: number; onSelect: (s: Station) => void }) {
   const map = useMap();
+  const { lang } = useLang();
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
   const framed = useRef(false);
@@ -34,7 +36,7 @@ export function NearbyLayer({ me, near, recenter, onSelect }: { me: Me | null; n
         }),
         keyboard: false, zIndexOffset: 500,
       })
-        .bindTooltip(`${n.s.name.replace(/[<>&"]/g, "")} · ${walkMin(n.d)} min walk`, { direction: "top", offset: [0, -10], className: "station-tip" })
+        .bindTooltip(`${n.s.name.replace(/[<>&"]/g, "")} · ${t("{n} min walk", { n: walkMin(n.d) })}`, { direction: "top", offset: [0, -10], className: "station-tip" })
         .on("click", () => onSelectRef.current(n.s))
         .addTo(group);
     });
@@ -44,7 +46,7 @@ export function NearbyLayer({ me, near, recenter, onSelect }: { me: Me | null; n
       keyboard: false, interactive: false, zIndexOffset: 1500,
     }).addTo(group);
     return () => { group.remove(); };
-  }, [map, me, near]);
+  }, [map, me, near, lang]);
 
   return null;
 }

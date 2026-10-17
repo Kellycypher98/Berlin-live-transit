@@ -3,6 +3,7 @@ import { fetchPlaces, stationPlace, type Place, type PlaceResult } from "../../l
 import { searchStations, type Indexed } from "../../lib/search";
 import { lineStyle } from "../../lib/lines";
 import { PlaceGlyph, PlaceIcon } from "../icons/PlaceIcon";
+import { t } from "../../i18n";
 
 type Props = {
   id: string;
@@ -42,13 +43,13 @@ export function PlaceInput({ id, label, placeholder, value, onChange, searchInde
     if (!typed) { setRemoteLoading(false); return; }
     const ctrl = new AbortController();
     setRemoteLoading(true);
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       fetchPlaces(typed, ctrl.signal)
         .then(r => { if (!ctrl.signal.aborted) setRemote(r); })
-        .catch(() => { if (!ctrl.signal.aborted) setRemote({ source: "none", places: [], note: "Address search is unavailable right now." }); })
+        .catch(() => { if (!ctrl.signal.aborted) setRemote({ source: "none", places: [], note: t("Address search is unavailable right now.") }); })
         .finally(() => { if (!ctrl.signal.aborted) setRemoteLoading(false); });
     }, 300);
-    return () => { clearTimeout(t); ctrl.abort(); };
+    return () => { clearTimeout(timer); ctrl.abort(); };
   }, [typed]);
 
   const stations = useMemo(() => (open ? searchStations(searchIndex, text, 5) : []), [open, text, searchIndex]);
@@ -96,8 +97,8 @@ export function PlaceInput({ id, label, placeholder, value, onChange, searchInde
         <div className="suggestions" id={listId} role="listbox">
           {options.map((o, k) => (
             <div key={o.key}>
-              {k === 0 && nStations > 0 && <div className="sg-head">Stations</div>}
-              {k === nStations && <div className="sg-head">Addresses &amp; places</div>}
+              {k === 0 && nStations > 0 && <div className="sg-head">{t("Stations")}</div>}
+              {k === nStations && <div className="sg-head">{t("Addresses & places")}</div>}
               <div
                 id={`${listId}-${k}`}
                 role="option"
@@ -122,13 +123,13 @@ export function PlaceInput({ id, label, placeholder, value, onChange, searchInde
           ))}
           {nStations === options.length && typed && (
             <div className="sg-note">
-              {remoteLoading ? <><span className="mini-spin" aria-hidden /> Looking up addresses…</>
-                : remote?.note ? remote.note
-                : remote && !remote.places.length ? "No addresses found." : null}
+              {remoteLoading ? <><span className="mini-spin" aria-hidden /> {t("Looking up addresses…")}</>
+                : remote?.note ? t(remote.note)
+                : remote && !remote.places.length ? t("No addresses found.") : null}
             </div>
           )}
-          {!options.length && !typed && <div className="sg-note">No station matches "{text.trim()}". Type 3+ letters to search addresses.</div>}
-          {remote?.source === "osm" && remote.places.length > 0 && <div className="sg-note small"><PlaceIcon kind="address" size={11} /> Addresses from OpenStreetMap</div>}
+          {!options.length && !typed && <div className="sg-note">{t("No station matches \"{text}\". Type 3+ letters to search addresses.", { text: text.trim() })}</div>}
+          {remote?.source === "osm" && remote.places.length > 0 && <div className="sg-note small"><PlaceIcon kind="address" size={11} /> {t("Addresses from OpenStreetMap")}</div>}
         </div>
       )}
     </div>

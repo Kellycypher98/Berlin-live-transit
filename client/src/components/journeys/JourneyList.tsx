@@ -3,14 +3,15 @@ import { dayLabel, delayLabel, hhmm, type Journey, type JourneyResult, type Leg 
 import { lineStyle } from "../../lib/lines";
 import { ModeIcon } from "../icons/modeIcons";
 import { PlaceIcon } from "../icons/PlaceIcon";
+import { locale, t } from "../../i18n";
 
 const legMinutes = (l: Leg) => Math.max(1, Math.round((Date.parse(l.arr) - Date.parse(l.dep)) / 60000));
-const fmtDistance = (m?: number | null) => (m == null ? "" : m >= 1000 ? `${(m / 1000).toFixed(1).replace(".", ",")} km` : `${Math.round(m / 10) * 10} m`);
+const fmtDistance = (m?: number | null) => (m == null ? "" : m >= 1000 ? `${(m / 1000).toLocaleString(locale(), { maximumFractionDigits: 1 })} km` : `${Math.round(m / 10) * 10} m`);
 
 /** Walking minutes as a small badge (skipped for platform changes). */
 function WalkChip({ leg }: { leg: Leg }) {
   return (
-    <span className="walk-chip" title={`Walk ${fmtDistance(leg.distance)}`}>
+    <span className="walk-chip" title={t("Walk {distance}", { distance: fmtDistance(leg.distance) })}>
       <PlaceIcon kind="walk" size={13} />{legMinutes(leg)}
     </span>
   );
@@ -32,17 +33,17 @@ function RefreshButton({ onRefresh, refreshing, fetchedAt }: { onRefresh: () => 
   const at = fetchedAt ? new Date(fetchedAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) : null;
   return (
     <button className="refresh-btn" onClick={onRefresh} disabled={refreshing}
-      aria-label={refreshing ? "Refreshing connections" : "Refresh connections"} title="Fetch fresh connections">
+      aria-label={refreshing ? t("Refreshing connections") : t("Refresh connections")} title={t("Fetch fresh connections")}>
       <span className={`refresh-icon ${refreshing ? "spin" : ""}`} aria-hidden>↻</span>
-      <span>{refreshing ? "Refreshing…" : at ? `Updated ${at}` : "Refresh"}</span>
+      <span>{refreshing ? t("Refreshing…") : at ? t("Updated {time}", { time: at }) : t("Refresh")}</span>
     </button>
   );
 }
 
 function whenText(r: JourneyResult) {
   const day = dayLabel(r.when);
-  const t = hhmm(r.when);
-  return `${r.mode === "arrive" ? "Arriving by" : "Departing from"} ${t}${day ? ` · ${day}` : ""}`;
+  const time = hhmm(r.when);
+  return `${t(r.mode === "arrive" ? "Arriving by {time}" : "Departing from {time}", { time })}${day ? ` · ${day}` : ""}`;
 }
 
 export function JourneyList({ result, selected, onSelect, onEarlier, onLater, onTrack, onRefresh, refreshing, fetchedAt }: Props) {
@@ -50,11 +51,14 @@ export function JourneyList({ result, selected, onSelect, onEarlier, onLater, on
     return (
       <div className="empty-state">
         <RefreshButton onRefresh={onRefresh} refreshing={refreshing} fetchedAt={fetchedAt} />
-        <strong>No connection found</strong>
+        <strong>{t("No connection found")}</strong>
         <p>
           {result.outOfRange
-            ? "The live journey planner is unavailable, and the timetable here only covers today and tomorrow. Try a time within the next two days."
-            : `Nothing runs from ${result.from.name} to ${result.to.name} ${result.mode === "arrive" ? "in the 4 hours before" : "within 4 hours of"} ${hhmm(result.when)}. Try another time or a nearby station.`}
+            ? t("The live journey planner is unavailable, and the timetable here only covers today and tomorrow. Try a time within the next two days.")
+            : t(result.mode === "arrive"
+              ? "Nothing runs from {from} to {to} in the 4 hours before {time}. Try another time or a nearby station."
+              : "Nothing runs from {from} to {to} within 4 hours of {time}. Try another time or a nearby station.",
+              { from: result.from.name, to: result.to.name, time: hhmm(result.when) })}
         </p>
       </div>
     );
@@ -64,11 +68,11 @@ export function JourneyList({ result, selected, onSelect, onEarlier, onLater, on
       <div className="results-head">
         <span className="when-text">{whenText(result)}</span>
         <span className={`source-note ${result.source}`}>
-          {result.source === "live" ? "Live, with delays" : "Timetable"}
+          {result.source === "live" ? t("Live, with delays") : t("Timetable")}
         </span>
       </div>
       <RefreshButton onRefresh={onRefresh} refreshing={refreshing} fetchedAt={fetchedAt} />
-      <button className="btn page-btn" onClick={onEarlier}>↑ Earlier</button>
+      <button className="btn page-btn" onClick={onEarlier}>↑ {t("Earlier")}</button>
       <ol className="journey-list">
         {result.journeys.map((j, k) => (
           <li key={k}>
@@ -76,7 +80,7 @@ export function JourneyList({ result, selected, onSelect, onEarlier, onLater, on
           </li>
         ))}
       </ol>
-      <button className="btn page-btn" onClick={onLater}>↓ Later</button>
+      <button className="btn page-btn" onClick={onLater}>↓ {t("Later")}</button>
     </div>
   );
 }
@@ -97,10 +101,10 @@ function JourneyCard({ journey: j, open, onToggle, onTrack }: { journey: Journey
           {firstDelay != null && firstDelay >= 60 && <span className="late"> {delayLabel(firstDelay)}</span>}
         </span>
         <span className="j-meta">
-          {j.duration} min · {walkOnly ? fmtDistance(first.distance) : j.transfers === 0 ? "direct" : `${j.transfers} change${j.transfers > 1 ? "s" : ""}`}
+          {t("{n} min", { n: j.duration })} · {walkOnly ? fmtDistance(first.distance) : j.transfers === 0 ? t("direct") : t(j.transfers > 1 ? "{n} changes" : "1 change", { n: j.transfers })}
         </span>
         <span className="j-lines">
-          {walkOnly && <span className="walk-chip wide"><PlaceIcon kind="walk" size={14} /> Walk all the way</span>}
+          {walkOnly && <span className="walk-chip wide"><PlaceIcon kind="walk" size={14} /> {t("Walk all the way")}</span>}
           {walkIn && <WalkChip leg={walkIn} />}
           {rides.map((l, k) => (
             <span key={k} className="ride-chip">
@@ -114,7 +118,7 @@ function JourneyCard({ journey: j, open, onToggle, onTrack }: { journey: Journey
       </button>
       {open && rides.some(l => l.track) && (
         <button className="btn track-btn" onClick={() => onTrack(null)}>
-          <span className="live-pulse" aria-hidden /> Track this journey live
+          <span className="live-pulse" aria-hidden /> {t("Track this journey live")}
         </button>
       )}
       {open && (
@@ -138,7 +142,7 @@ function LegRow({ leg, onTrack }: { leg: Leg; onTrack?: () => void }) {
       return (
         <li className="leg walk">
           <span className="t" />
-          <span className="walk-text">Change platforms · {mins} min</span>
+          <span className="walk-text">{t("Change platforms")} · {t("{n} min", { n: mins })}</span>
         </li>
       );
     }
@@ -150,9 +154,9 @@ function LegRow({ leg, onTrack }: { leg: Leg; onTrack?: () => void }) {
         <div className="walk-body">
           <span className="place">{leg.from.name}</span>
           <span className="walk-text">
-            <PlaceIcon kind="walk" size={14} /> Walk {leg.streetRoute ? "" : "about "}{dist} · {mins} min
+            <PlaceIcon kind="walk" size={14} /> {t(leg.streetRoute ? "Walk {distance}" : "Walk about {distance}", { distance: dist })} · {t("{n} min", { n: mins })}
           </span>
-          <span className="muted small">to {leg.to.name}</span>
+          <span className="muted small">{t("to {place}", { place: leg.to.name })}</span>
         </div>
       </li>
     );
@@ -170,15 +174,15 @@ function LegRow({ leg, onTrack }: { leg: Leg; onTrack?: () => void }) {
         <span className="ride-line">
           <ModeIcon mode={leg.product ?? "bus"} size={16} />
           <span className="chip" style={style}>{leg.line}</span> → {leg.dir}
-          {leg.cancelled && <span className="cancelled">Cancelled</span>}
-          {onTrack && <button className="link-btn" onClick={onTrack}>Track</button>}
+          {leg.cancelled && <span className="cancelled">{t("Cancelled")}</span>}
+          {onTrack && <button className="link-btn" onClick={onTrack}>{t("Track")}</button>}
         </span>
         {leg.stops.length > 0 && (
           <button className="stops-toggle" onClick={() => setShowStops(v => !v)} aria-expanded={showStops}>
-            {showStops ? "Hide" : "Show"} {leg.stops.length} stop{leg.stops.length > 1 ? "s" : ""} · {mins} min
+            {t(showStops ? (leg.stops.length > 1 ? "Hide {n} stops" : "Hide 1 stop") : (leg.stops.length > 1 ? "Show {n} stops" : "Show 1 stop"), { n: leg.stops.length })} · {t("{n} min", { n: mins })}
           </button>
         )}
-        {leg.stops.length === 0 && <span className="muted">{mins} min, no stops between</span>}
+        {leg.stops.length === 0 && <span className="muted">{t("{n} min, no stops between", { n: mins })}</span>}
         {showStops && (
           <ol className="stopovers">
             {leg.stops.map((s, k) => (
@@ -186,7 +190,7 @@ function LegRow({ leg, onTrack }: { leg: Leg; onTrack?: () => void }) {
             ))}
           </ol>
         )}
-        <span className="place to">{leg.to.name} <span className="muted">· arr. {hhmm(leg.arr)}</span></span>
+        <span className="place to">{leg.to.name} <span className="muted">· {t("arr. {time}", { time: hhmm(leg.arr) })}</span></span>
       </div>
     </li>
   );

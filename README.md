@@ -44,6 +44,28 @@ Requires Node 18+.
   forwards for "depart at", backwards for "arrive by"). The local timetable covers today
   and tomorrow; further ahead needs the live planner.
 
+## Hosting
+
+App on Netlify, server on Render (or any container host): see [DEPLOY.md](DEPLOY.md).
+
+## Languages
+
+English and German. The app picks German when the browser prefers it; switch any time at the bottom of
+the layers panel (remembered per browser). Texts are written in English in the code and translated in
+`client/src/i18n/de.ts` (missing ones fall back to English and are logged in dev). To add a language,
+copy `de.ts`, translate it, and register it in `client/src/i18n/index.ts`.
+
+## Admin dashboard
+
+Open `/admin` (e.g. http://localhost:5173/admin in dev) for a small dashboard: people online and
+visitors today, vehicles by source and type over the last hour, the state of each data source,
+journey/tracking/search counts, API response times and errors, and recent server warnings.
+
+- Locally it just works (only from this computer).
+- On a server, set `ADMIN_TOKEN` to a long random secret (`openssl rand -hex 24`) and sign in with it.
+  Without `ADMIN_TOKEN` the dashboard refuses every remote request. 5 wrong tokens lock that IP out for 10 min.
+- Stats live in memory only and reset on restart. Visitors are counted by a salted hash, no IPs are stored.
+
 ## Structure
 
 ```
@@ -61,6 +83,8 @@ client/src/
     icons/             mode badges and place icons
   hooks/               live vehicles (WebSocket), stations, lines, tracking, my location
   lib/                 API client + types, line colours, modes, station search, nearby maths
+  i18n/                translations (English in the code, German in de.ts)
+  admin/               admin dashboard (/admin), loaded only when opened
   assets/              logo
 lib/
   timetable.js         downloads + indexes the GTFS timetable
@@ -70,6 +94,7 @@ lib/
   lines.js             network map (one deduplicated path set per line)
   places.js            address / place search (VBB, then Photon) and reverse lookup
   walk.js              street walking routes (OSRM foot, OpenStreetMap) with fallback
+  stats.js             in-memory stats + access check for the admin dashboard
   tracking.js          live tracking of one trip; links community journey legs to the timetable
   journeys.js          journey planning (community API + local fallback), departures
   positions.js         timetable + delays -> vehicle positions
@@ -113,6 +138,8 @@ Three VBB sources, used per area of the map (Berlin is split into 16 areas), bes
 | `RADAR`       | set to `off` to use only the official feeds      |
 | `PHOTON_URL`  | `https://photon.komoot.io` (address search fallback) |
 | `WALK_ROUTER_URL` | `https://routing.openstreetmap.de/routed-foot` (walking routes) |
+| `TRUST_PROXY` | set to `1` behind a host's proxy (Render, Fly) so visitor counts use real addresses |
+| `ADMIN_TOKEN` | unset = admin dashboard only from localhost |
 | `CONTACT`     | your email or URL, sent in the User-Agent (VBB asks for this and blocks generic clients) |
 
 Data: © VBB Verkehrsverbund Berlin-Brandenburg GmbH, CC-BY-4.0.

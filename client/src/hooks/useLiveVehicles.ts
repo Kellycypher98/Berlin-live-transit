@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import type { ConnectionState, Snapshot } from "../lib/types";
 
+/** wss://<backend>/live when the server runs elsewhere (Netlify), else the same host the app came from. */
+function liveUrl() {
+  if (__BACKEND_URL__) return __BACKEND_URL__.replace(/^http/, "ws") + "/live";
+  const proto = location.protocol === "https:" ? "wss" : "ws";
+  return `${proto}://${location.host}/live`;
+}
+
 /** Subscribes to the server's /live WebSocket and reconnects with backoff. */
 export function useLiveVehicles() {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
@@ -13,8 +20,7 @@ export function useLiveVehicles() {
     let stopped = false;
 
     const connect = () => {
-      const proto = location.protocol === "https:" ? "wss" : "ws";
-      ws = new WebSocket(`${proto}://${location.host}/live`);
+      ws = new WebSocket(liveUrl());
       setState("connecting");
       ws.onopen = () => { setState("open"); delay = 1000; };
       ws.onmessage = e => {

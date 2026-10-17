@@ -2,6 +2,7 @@ import { stationPlace, type Station } from "../../lib/api";
 import { PlaceGlyph, PlaceIcon } from "../icons/PlaceIcon";
 import { lineStyle } from "../../lib/lines";
 import { walkMin, type NearStation } from "../../lib/nearby";
+import { locale, t } from "../../i18n";
 
 /** "Near you" list in the side panel. */
 export function NearbyList({ near, locating, onSelect, onFrom, onClose }: {
@@ -9,14 +10,14 @@ export function NearbyList({ near, locating, onSelect, onFrom, onClose }: {
   onSelect: (s: Station) => void; onFrom: (s: Station) => void; onClose: () => void;
 }) {
   return (
-    <section className="nearby" aria-label="Stations near you">
+    <section className="nearby" aria-label={t("Stations near you")}>
       <header>
         <PlaceIcon kind="location" size={16} />
-        <h2>Near you</h2>
-        <button className="icon-btn" onClick={onClose} aria-label="Hide stations near you">×</button>
+        <h2>{t("Near you")}</h2>
+        <button className="icon-btn" onClick={onClose} aria-label={t("Hide stations near you")}>×</button>
       </header>
-      {locating && <p className="muted small">Finding your location…</p>}
-      {!locating && near.length === 0 && <p className="muted small">No stations within 1.5 km.</p>}
+      {locating && <p className="muted small">{t("Finding your location…")}</p>}
+      {!locating && near.length === 0 && <p className="muted small">{t("No stations within 1.5 km.")}</p>}
       <ul>
         {near.map(({ s, d }) => (
           <li key={s.i}>
@@ -30,11 +31,11 @@ export function NearbyList({ near, locating, onSelect, onFrom, onClose }: {
                 </span>
               </span>
               <span className="nb-dist">
-                <b>{walkMin(d)} min</b>
-                <span>{d < 1000 ? `${Math.round(d / 10) * 10} m` : `${(d / 1000).toFixed(1)} km`}</span>
+                <b>{t("{n} min", { n: walkMin(d) })}</b>
+                <span>{d < 1000 ? `${Math.round(d / 10) * 10} m` : `${(d / 1000).toLocaleString(locale(), { maximumFractionDigits: 1 })} km`}</span>
               </span>
             </button>
-            <button className="btn sm nb-go" onClick={() => onFrom(s)} title={`Route from ${s.name}`}>From here</button>
+            <button className="btn sm nb-go" onClick={() => onFrom(s)} title={t("Route from {place}", { place: s.name })}>{t("From here")}</button>
           </li>
         ))}
       </ul>

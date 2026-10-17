@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Me } from "../lib/nearby";
+import { t } from "../i18n";
 
 /** Follows your position while "Near me" is on. */
 export function useMyLocation() {
@@ -17,7 +18,7 @@ export function useMyLocation() {
 
   const start = useCallback(() => {
     if (on && me) { setRecenter(k => k + 1); return; }   // already on: just jump back to you
-    if (!navigator.geolocation) { setError("Your browser can't share its location."); return; }
+    if (!navigator.geolocation) { setError(t("Your browser can't share its location.")); return; }
     setOn(true); setLocating(true); setError(null);
     watch.current = navigator.geolocation.watchPosition(
       pos => {
@@ -25,7 +26,7 @@ export function useMyLocation() {
         setMe({ lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy });
       },
       err => {
-        setError(err.code === err.PERMISSION_DENIED ? "Location access is blocked. Allow it in your browser to see stations near you." : "Couldn't find your location.");
+        setError(err.code === err.PERMISSION_DENIED ? t("Location access is blocked. Allow it in your browser to see stations near you.") : t("Couldn't find your location."));
         stop();
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },

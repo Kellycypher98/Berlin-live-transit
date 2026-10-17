@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchTrack, type Journey, type Leg, type TrackState } from "../lib/api";
+import { t } from "../i18n";
 
 export type Tracking = { journey: Journey; leg: number | null }; // leg = index into journey.legs; null = follow the journey automatically
 
@@ -51,7 +52,7 @@ export function useTracking(tracking: Tracking | null) {
   useEffect(() => { setData(null); setError(null); }, [tracking?.journey, legIndex]);
 
   useEffect(() => {
-    if (!leg?.track) { if (leg) setError("This ride can't be tracked live."); return; }
+    if (!leg?.track) { if (leg) setError(t("This ride can't be tracked live.")); return; }
     const ctrl = new AbortController();
     fetchTrack(leg.track, ctrl.signal)
       .then(d => {

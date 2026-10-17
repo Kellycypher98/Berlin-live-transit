@@ -23,6 +23,9 @@ import { buildLineMap } from "./lib/lines.js";
 import { matchCommunityLeg, trackTrip, trackCommunityTrip } from "./lib/tracking.js";
 import { searchPlaces, reversePlace } from "./lib/places.js";
 import { enhanceWalks } from "./lib/walk.js";
+import { trackRequest, count, trackConnection, recordTick, captureLogs, statsSnapshot, checkAdmin } from "./lib/stats.js";
+
+captureLogs();
 
 const PORT = process.env.PORT || 3000;
 const GTFS_URL = process.env.GTFS_URL
@@ -46,14 +49,17 @@ let snapshot = { type: "snapshot", interval: TICK_MS, updatedAt: null, vehicles:
 // ---------- timetable (reloads when the Berlin date changes) ----------
 let loadingFor = null;
 let lastFailAt = 0;
+let timetableInfo = null; // { version, loadedAt, ms } for the admin dashboard
 async function loadTimetable() {
   const { date } = berlinNow();
   if (index?.serviceDate === date || loadingFor === date) return;
   if (Date.now() - lastFailAt < 5 * 60 * 1000) return; // wait 5 min after a failure
   loadingFor = date;
   try {
+    const t0 = Date.now();
     const version = await ensureGtfs(GTFS_URL, log);
     index = prepareIndex(await buildIndex(date, version, log));
+    timetableInfo = { version, loadedAt: Date.now(), ms: Date.now() - t0 };
     lastFailAt = 0;
     network = null; stationsJson = null; linesJson = null;
     setTimeout(() => {
@@ -126,6 +132,7 @@ async function findJourneys(fromP, toP, { when = null, mode = "depart" } = {}) {
       delete leg.fromId; delete leg.toId; delete leg.plannedDep; delete leg.hafasTrip;
     }
     result = { from, to, source: "live", mode, when: new Date(at).toISOString(), journeys, notes };
+    count("journeysLive");
   } catch (e) {
     log(`journeys: community API failed (${e.message}), using local planner`);
     notes.push("Live journey planner unavailable; using the timetable.");
@@ -141,6 +148,7 @@ async function findJourneys(fromP, toP, { when = null, mode = "depart" } = {}) {
     const freshRt = rt && Date.now() - rt.fetchedAt < RT_MAX_AGE_MS ? rt : null;
     const journeys = net ? planLocal(net, index, fromP, toP, sec, { mode, count: 3, rt: freshRt }) : [];
     result = { from, to, source: "timetable", mode, when: new Date(at).toISOString(), journeys, notes };
+    count("journeysLocal");
   }
   // Walks to and from addresses along real streets (best effort, ~3 s budget)
   await enhanceWalks(result.journeys);
@@ -247,15 +255,24 @@ function tick() {
     },
   };
   broadcast(JSON.stringify(snapshot));
+  recordTick(snapshot.sources, wss.clients.size);
 }
 
 // --- HTTP: API + the built React app (client/dist) ---
 const DIST = fileURLToPath(new URL("./client/dist/", import.meta.url));
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css",
-  ".svg": "image/svg+xml", ".png": "image/png", ".json": "application/json", ".ico": "image/x-icon", ".webmanifest": "application/manifest+json" };
+  ".svg": "image/svg+xml", ".png": "image/png", ".json": "application/json", ".ico": "image/x-icon", ".webmanifest": "application/manifest+json", ".woff2": "font/woff2", ".woff": "font/woff" };
 
 const server = http.createServer(async (req, res) => {
   const path = new URL(req.url, "http://x").pathname;
+  trackRequest(req, res);
+
+  if (path === "/api/admin/stats") {
+    const denied = checkAdmin(req);
+    if (denied) return sendJson(res, denied[0], { error: denied[1] });
+    res.setHeader("cache-control", "no-store");
+    return sendJson(res, 200, adminStats());
+  }
 
   if (path === "/api/vehicles") {
     // Plain JSON (handy for a React Native app or debugging)
@@ -293,6 +310,7 @@ const server = http.createServer(async (req, res) => {
     const q = (new URL(req.url, "http://x").searchParams.get("q") || "").trim();
     if (q.length < 3) return sendJson(res, 200, { source: "none", places: [] });
     if (q.length > 100) return sendJson(res, 400, { error: "Search text is too long." });
+    count("placeSearches");
     return sendJson(res, 200, await searchPlaces(COMMUNITY_API, q));
   }
   if (path === "/api/reverse") {
@@ -308,6 +326,7 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 400, { error: "Missing or invalid trip." });
     }
     try {
+      count("tracks");
       const r = await track({ trip, day, hafas });
       if (!r) return sendJson(res, 404, { error: "This vehicle can't be tracked right now." });
       return sendJson(res, 200, r);
@@ -335,6 +354,7 @@ const server = http.createServer(async (req, res) => {
       }
     }
     try {
+      count("journeys");
       return sendJson(res, 200, await findJourneys(from, to, { when, mode }));
     } catch (e) {
       console.error("journeys failed:", e);
@@ -351,15 +371,39 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(200, { "content-type": TYPES[extname(file)] || "application/octet-stream", "cache-control": cache });
     res.end(body);
   } catch {
-    try {
+    // Read first, then send: a missing build must not crash the server (backend-only hosting has no client/dist)
+    const html = await readFile(join(DIST, "index.html")).catch(() => null);
+    if (html) {
       res.writeHead(200, { "content-type": TYPES[".html"] });
-      res.end(await readFile(join(DIST, "index.html")));
-    } catch {
-      res.writeHead(503, { "content-type": "text/plain" });
-      res.end("React app not built yet. Run `npm run build`, or use `npm run dev` and open http://localhost:5173");
+      res.end(html);
+    } else {
+      res.writeHead(404, { "content-type": "text/plain" });
+      res.end("Berlin Live Transit API. The app itself isn't built here (run `npm run build`, or open the app's own site).");
     }
   }
 });
+
+/** Everything the admin dashboard shows. */
+function adminStats() {
+  const byMode = {};
+  for (const v of snapshot.vehicles) byMode[v.product] = (byMode[v.product] ?? 0) + 1;
+  return statsSnapshot({
+    clients: wss.clients.size,
+    vehicles: snapshot.vehicles.length,
+    byMode,
+    updatedAt: snapshot.updatedAt,
+    sources: {
+      live: radar
+        ? { enabled: true, areas: radar.freshCount(), totalAreas: radar.tiles.length, vehicles: snapshot.sources?.live.vehicles ?? 0,
+            failing: radar.tiles.filter(t => t.error).length, failedSweeps: radar.failedSweeps }
+        : { enabled: false },
+      delays: { ...rtStatus, fetchedAt: rt?.fetchedAt ?? null, blockedUntil: rtBlockedUntil > Date.now() ? rtBlockedUntil : null },
+      timetable: index
+        ? { ready: true, serviceDate: index.serviceDate, trips: index.trips.length, stations: index.stations.id.length, ...timetableInfo }
+        : { ready: false, loading: !!loadingFor, failedAt: lastFailAt || null },
+    },
+  });
+}
 
 function sendJson(res, status, body) {
   res.writeHead(status, { "content-type": "application/json" });
@@ -369,7 +413,7 @@ function sendJson(res, status, body) {
 // --- WebSocket: push snapshots ---
 // perMessageDeflate compresses each update ~5-10x (thousands of vehicles every 10 s)
 const wss = new WebSocketServer({ server, path: "/live", perMessageDeflate: { threshold: 1024 } });
-wss.on("connection", ws => ws.send(JSON.stringify(snapshot)));
+wss.on("connection", (ws, req) => { trackConnection(req, wss.clients.size); ws.send(JSON.stringify(snapshot)); });
 function broadcast(msg) { for (const c of wss.clients) if (c.readyState === 1) c.send(msg); }
 
 server.on("error", e => {

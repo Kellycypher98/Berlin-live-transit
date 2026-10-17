@@ -5,6 +5,7 @@ import type { Vehicle } from "../../lib/types";
 import { colorOf, modeOf, type ModeKey } from "../../lib/modes";
 import { drawBadge, roundRect } from "../icons/modeIcons";
 import { lineStyle } from "../../lib/lines";
+import { t } from "../../i18n";
 
 type Tracked = {
   v: Vehicle;
@@ -29,11 +30,11 @@ function tooltip(v: Vehicle) {
   let when = "";
   if (v.delay !== null) {
     const min = Math.round(v.delay / 60);
-    when = min > 0 ? ` · <span class="tt-late">+${min} min</span>`
-      : min < 0 ? ` · <span class="tt-ok">${min} min</span>`
-      : ' · <span class="tt-ok">on time</span>';
+    when = min > 0 ? ` · <span class="tt-late">${t("+{n} min", { n: min })}</span>`
+      : min < 0 ? ` · <span class="tt-ok">${t("{n} min", { n: min })}</span>`
+      : ` · <span class="tt-ok">${t("on time")}</span>`;
   }
-  return `${escape(v.line)} → ${escape(v.dir)}${when}<br><span class="tt-muted">${SOURCE_LABEL[v.source] ?? ""}</span>`;
+  return `${escape(v.line)} → ${escape(v.dir)}${when}<br><span class="tt-muted">${t(SOURCE_LABEL[v.source] ?? "")}</span>`;
 }
 
 /**
@@ -98,6 +99,8 @@ export function VehicleLayer({ vehicles, interval, enabled, dimmed = false }: Pr
     resize();
 
     const pillCache = new Map<string, number>(); // label width cache
+    // Measured widths are wrong until Manrope has loaded; measure again once it has
+    document.fonts?.ready.then(() => pillCache.clear());
     const draw = (now: number) => {
       raf = requestAnimationFrame(draw);
       if (zooming) return;
@@ -143,7 +146,7 @@ export function VehicleLayer({ vehicles, interval, enabled, dimmed = false }: Pr
         // label: [badge][ line ]
         const label = t.v.line || "?";
         const ls = lineStyle(label, t.v.product);
-        ctx.font = "700 12px 'IBM Plex Sans Condensed', 'Arial Narrow', sans-serif";
+        ctx.font = "700 12px 'Manrope Variable', Manrope, system-ui, sans-serif";
         let w = pillCache.get(label);
         if (w === undefined) { w = ctx.measureText(label).width; pillCache.set(label, w); }
         const s = 18, padR = 6, gap = 4, h = s;

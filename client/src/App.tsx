@@ -20,10 +20,12 @@ import { LocateButton } from "./components/nearby/LocateButton";
 import { NearbyLayer } from "./components/nearby/NearbyLayer";
 import { nearestStations } from "./lib/nearby";
 import { useMyLocation } from "./hooks/useMyLocation";
+import { t, useLang } from "./i18n";
 
 const BERLIN_CENTER: [number, number] = [52.5163, 13.3777];
 
 export function App() {
+  useLang(); // re-render everything when the language changes
   const { snapshot, state } = useLiveVehicles();
   const { stations, searchIndex, error: stationsError } = useStations();
   const mapLines = useLines();
@@ -72,7 +74,7 @@ export function App() {
     setError(null);
     if (!isRefresh) { setResult(null); setSelected(0); }
     if (!from || !to) return;
-    if (fromKey === toKey) { setError("Start and destination are the same place."); return; }
+    if (fromKey === toKey) { setError(t("Start and destination are the same place.")); return; }
     if (!isRefresh) setStation(null);
     const ctrl = new AbortController();
     setLoading(true);
@@ -84,7 +86,7 @@ export function App() {
           setResult(r); setFetchedAt(Date.now());
           if (isRefresh) setSelected(k => Math.min(k, Math.max(0, r.journeys.length - 1)));
         })
-        .catch(e => { if (!ctrl.signal.aborted) setError(isRefresh ? `Couldn't refresh: ${e.message}` : e.message); })
+        .catch(e => { if (!ctrl.signal.aborted) setError(isRefresh ? t("Couldn't refresh: {message}", { message: e.message }) : e.message); })
         .finally(() => { if (!ctrl.signal.aborted) setLoading(false); });
     }, isRefresh ? 0 : 250);
     return () => { clearTimeout(timer); ctrl.abort(); };

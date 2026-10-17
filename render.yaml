@@ -1,0 +1,14 @@
+# Render Blueprint for the backend (Render dashboard → New → Blueprint → pick this repo).
+services:
+  - type: web
+    name: berlin-live-api
+    runtime: docker
+    plan: free            # sleeps after 15 min without visitors; "starter" stays on
+    healthCheckPath: /health
+    envVars:
+      - key: CONTACT
+        sync: false       # you're asked for it on first deploy (your email, sent to VBB)
+      - key: ADMIN_TOKEN
+        generateValue: true
+      - key: TRUST_PROXY
+        value: "1"

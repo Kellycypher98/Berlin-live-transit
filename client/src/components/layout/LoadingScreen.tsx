@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ConnectionState, Snapshot } from "../../lib/types";
 import logo from "../../assets/logo-128.png";
+import { t } from "../../i18n";
 
 type Props = {
   state: ConnectionState;
@@ -33,17 +34,17 @@ export function LoadingScreen({ state, snapshot, stationsReady, linesReady }: Pr
   }, [open]);
 
   const steps: Step[] = [
-    { label: "Connecting to the live server", done: connected, active: !connected },
-    { label: "Finding vehicles", done: hasVehicles, active: connected && !hasVehicles },
+    { label: t("Connecting to the live server"), done: connected, active: !connected },
+    { label: t("Finding vehicles"), done: hasVehicles, active: connected && !hasVehicles },
     {
-      label: "Stations and timetable", done: timetableReady, active: connected && !timetableReady,
-      note: "The first start downloads the VBB timetable, which takes a minute or two.",
+      label: t("Stations and timetable"), done: timetableReady, active: connected && !timetableReady,
+      note: t("The first start downloads the VBB timetable, which takes a minute or two."),
     },
   ];
   const failed = state === "closed" || !!snapshot?.error;
-  const message = state === "closed" ? "Can't reach the server. Retrying…" : snapshot?.error;
+  const message = state === "closed" ? t("Can't reach the server. Retrying…") : snapshot?.error && t(snapshot.error);
 
-  const pending = [!stationsReady && "stations", !linesReady && "line map"].filter(Boolean);
+  const pending = [!stationsReady && t("stations"), !linesReady && t("line map")].filter(Boolean);
 
   return (
     <>
@@ -55,7 +56,7 @@ export function LoadingScreen({ state, snapshot, stationsReady, linesReady }: Pr
               <span /><span /><span />
             </div>
             <h1>Berlin Live Transit</h1>
-            <p className="loading-sub">Every train, tram, bus and ferry, live.</p>
+            <p className="loading-sub">{t("Every train, tram, bus and ferry, live.")}</p>
             <ol className="loading-steps">
               {steps.map(s => (
                 <li key={s.label} className={s.done ? "done" : s.active ? "active" : ""}>
@@ -69,7 +70,7 @@ export function LoadingScreen({ state, snapshot, stationsReady, linesReady }: Pr
             </ol>
             {failed && message && <p className="loading-error">{message}</p>}
             {slow && open && (
-              <button className="btn loading-skip" onClick={() => setSkipped(true)}>Show the map anyway</button>
+              <button className="btn loading-skip" onClick={() => setSkipped(true)}>{t("Show the map anyway")}</button>
             )}
           </div>
         </div>
@@ -77,7 +78,7 @@ export function LoadingScreen({ state, snapshot, stationsReady, linesReady }: Pr
       {!open && pending.length > 0 && (
         <div className="loading-pill" role="status">
           <span className="spinner" aria-hidden />
-          Loading {pending.join(" and ")}…
+          {t("Loading {what}…", { what: pending.join(` ${t("and")} `) })}
         </div>
       )}
     </>

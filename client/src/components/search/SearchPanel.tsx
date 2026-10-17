@@ -10,6 +10,7 @@ import { TrackPanel } from "../tracking/TrackPanel";
 import type { ComponentProps } from "react";
 import { NearbyList } from "../nearby/NearbyList";
 import type { NearStation } from "../../lib/nearby";
+import { t } from "../../i18n";
 
 type Props = {
   stations: Station[];
@@ -46,19 +47,19 @@ export function SearchPanel(p: Props) {
   const ready = p.stations.length > 0;
 
   const useMyLocation = () => {
-    if (!navigator.geolocation) { setLocError("Your browser can't share its location."); return; }
+    if (!navigator.geolocation) { setLocError(t("Your browser can't share its location.")); return; }
     setLocating(true); setLocError(null);
     navigator.geolocation.getCurrentPosition(
       pos => {
         setLocating(false);
         // Your exact position; the street name is filled in when the lookup answers
-        const here: Place = { kind: "location", name: "My location", lat: pos.coords.latitude, lng: pos.coords.longitude };
+        const here: Place = { kind: "location", name: t("My location"), lat: pos.coords.latitude, lng: pos.coords.longitude };
         p.setFrom(here);
-        fetchReverse(here.lat, here.lng).then(r => { if (r.name) p.setFrom({ ...here, detail: `near ${r.name}` }); }).catch(() => {});
+        fetchReverse(here.lat, here.lng).then(r => { if (r.name) p.setFrom({ ...here, detail: t("near {place}", { place: r.name }) }); }).catch(() => {});
       },
       err => {
         setLocating(false);
-        setLocError(err.code === err.PERMISSION_DENIED ? "Location access was blocked. Type an address or station instead." : "Couldn't get your location. Type an address or station instead.");
+        setLocError(err.code === err.PERMISSION_DENIED ? t("Location access was blocked. Type an address or station instead.") : t("Couldn't get your location. Type an address or station instead."));
       },
       { enableHighAccuracy: true, timeout: 10000 },
     );
@@ -68,36 +69,36 @@ export function SearchPanel(p: Props) {
     <aside className="search-panel">
       <form className="search-form" onSubmit={e => e.preventDefault()}>
         <PlaceInput
-          id="from" label="From" placeholder={ready ? "Address, place or station" : "Loading stations…"}
+          id="from" label={t("From")} placeholder={ready ? t("Address, place or station") : t("Loading stations…")}
           value={p.from} onChange={p.setFrom} searchIndex={p.searchIndex} disabled={!ready}
           trailing={
             <button type="button" className="icon-btn" onClick={useMyLocation} disabled={!ready || locating}
-              aria-label="Use my location" title="Use my location">
+              aria-label={t("Use my location")} title={t("Use my location")}>
               {locating ? "…" : <PlaceIcon kind="location" size={16} />}
             </button>
           }
         />
         <PlaceInput
-          id="to" label="To" placeholder={ready ? "Where to? Address, place or station" : "Loading stations…"}
+          id="to" label={t("To")} placeholder={ready ? t("Where to? Address, place or station") : t("Loading stations…")}
           value={p.to} onChange={p.setTo} searchIndex={p.searchIndex} disabled={!ready}
           trailing={
             <button type="button" className="icon-btn" disabled={!p.from && !p.to}
               onClick={() => { const f = p.from; p.setFrom(p.to); p.setTo(f); }}
-              aria-label="Swap start and destination" title="Swap">⇅</button>
+              aria-label={t("Swap start and destination")} title={t("Swap")}>⇅</button>
           }
         />
         <TimePicker value={p.timeChoice} onChange={p.onTimeChoice} />
-        {!ready && p.stationsError && <p className="muted small">{p.stationsError}</p>}
+        {!ready && p.stationsError && <p className="muted small">{t(p.stationsError)}</p>}
         {locError && <p className="err small">{locError}</p>}
-        {p.from?.detail && p.from.kind === "location" && <p className="muted small from-detail">From {p.from.detail}</p>}
+        {p.from?.detail && p.from.kind === "location" && <p className="muted small from-detail">{t("From {place}", { place: p.from.detail })}</p>}
       </form>
 
       <div className="panel-body">
-        {p.loading && !p.result && <p className="muted">Finding connections…</p>}
+        {p.loading && !p.result && <p className="muted">{t("Finding connections…")}</p>}
         {p.error && (
           <div className="err-row">
             <p className="err">{p.error}</p>
-            {p.from && p.to && placeKey(p.from) !== placeKey(p.to) && <button className="btn sm" onClick={p.onRefresh}>Try again</button>}
+            {p.from && p.to && placeKey(p.from) !== placeKey(p.to) && <button className="btn sm" onClick={p.onRefresh}>{t("Try again")}</button>}
           </div>
         )}
         {p.tracking ? (
@@ -118,9 +119,9 @@ export function SearchPanel(p: Props) {
           <>
             <button className="near-me-btn" onClick={p.onNearMe}>
               <PlaceIcon kind="location" size={18} />
-              <span>Stations near me</span>
+              <span>{t("Stations near me")}</span>
             </button>
-            {!p.error && <p className="muted small hint">Search any address, place or station. Tap a station for its departures, or right-click (long-press) the map to route from or to that spot.</p>}
+            {!p.error && <p className="muted small hint">{t("Search any address, place or station. Tap a station for its departures, or right-click (long-press) the map to route from or to that spot.")}</p>}
           </>
         )}
       </div>

@@ -1,15 +1,15 @@
 :root {
   --bg: #eef1f4; --panel: #ffffffee; --fg: #16202b; --muted: #5b6875; --line: #d3dae1;
   --ok: #1f8a4c; --err: #be1414; --warn: #c27c0e;
-  --font: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font: "Manrope Variable", "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: var(--font); /* numbers use tabular figures instead of a monospace face */
 }
 @media (prefers-color-scheme: dark) {
   :root { --bg: #0f151b; --panel: #18212bee; --fg: #e7edf3; --muted: #93a1ae; --line: #2a3643; --ok: #3cc477; --warn: #e3a33a; color-scheme: dark; }
 }
 
 html, body, #root { height: 100%; margin: 0; }
-body { background: var(--bg); color: var(--fg); font-family: var(--font); }
+body { background: var(--bg); color: var(--fg); font-family: var(--font); font-feature-settings: "tnum"; } /* tabular figures everywhere, so times and counts line up */
 
 .map { position: fixed; inset: 0; }
 
@@ -433,3 +433,13 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font); }
 .near-me-btn:hover { background: color-mix(in srgb, #1a73e8 15%, transparent); }
 .near-me-btn:focus-visible { outline: 2px solid #1a73e8; outline-offset: 2px; }
 @media (prefers-color-scheme: dark) { .near-me-btn { color: #7fb0ff; } }
+
+/* ---------- language switch ---------- */
+.lang-switch { display: flex; align-items: center; gap: 4px; padding-top: 8px; border-top: 1px solid var(--line); }
+.lang-switch .lang-label { flex: 1; font-size: 13px; color: var(--muted); }
+.lang-switch button {
+  all: unset; cursor: pointer; padding: 3px 9px; border-radius: 999px; font: 600 12px var(--font);
+  color: var(--muted); border: 1px solid transparent;
+}
+.lang-switch button.on { color: var(--fg); border-color: var(--line); background: color-mix(in srgb, var(--fg) 6%, transparent); }
+.lang-switch button:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }

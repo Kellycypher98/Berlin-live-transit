@@ -2,6 +2,7 @@ import { delayLabel, hhmm, type Journey, type Leg, type TrackState } from "../..
 import { boardAlight } from "../../hooks/useTracking";
 import { lineStyle } from "../../lib/lines";
 import { ModeIcon } from "../icons/modeIcons";
+import { t } from "../../i18n";
 
 type Props = {
   journey: Journey;
@@ -16,40 +17,40 @@ type Props = {
   onStop: () => void;
 };
 
-const SOURCE_TEXT = { live: "Live position", delays: "Timetable + live delay", timetable: "Timetable estimate" } as const;
+const SOURCE_TEXT = { live: "Live position", delays: "Timetable + live delay", timetable: "Timetable estimate" } as const; // translated where shown
 
 function minutesUntil(iso: string, delay: number | null | undefined) {
   return Math.round((Date.parse(iso) + (delay ?? 0) * 1000 - Date.now()) / 60000);
 }
-const inMin = (m: number) => (m <= 0 ? "now" : m === 1 ? "in 1 min" : `in ${m} min`);
+const inMin = (m: number) => (m <= 0 ? t("now") : m === 1 ? t("in 1 min") : t("in {n} min", { n: m }));
 
 /** The headline: where the vehicle is relative to the traveller. */
-function status(leg: Leg, t: TrackState) {
-  const { board, alight } = boardAlight(leg, t);
-  const s = t.stops;
+function status(leg: Leg, tr: TrackState) {
+  const { board, alight } = boardAlight(leg, tr);
+  const s = tr.stops;
   const name = (i: number) => s[i]?.name ?? "";
-  if (t.state === "cancelled") return { tone: "bad", title: `${t.line} is cancelled`, sub: "Look for another connection." };
-  if (t.next <= board || t.state === "scheduled") {
-    if (t.atStop === board) return { tone: "go", title: `${t.line} is at ${name(board)}`, sub: "Board now." };
-    const m = minutesUntil(s[board].dep, t.delay);
-    const stopsAway = Math.max(0, board - t.next);
+  if (tr.state === "cancelled") return { tone: "bad", title: t("{line} is cancelled", { line: tr.line }), sub: t("Look for another connection.") };
+  if (tr.next <= board || tr.state === "scheduled") {
+    if (tr.atStop === board) return { tone: "go", title: t("{line} is at {stop}", { line: tr.line, stop: name(board) }), sub: t("Board now.") };
+    const m = minutesUntil(s[board].dep, tr.delay);
+    const stopsAway = Math.max(0, board - tr.next);
     return {
       tone: m <= 2 ? "go" : "wait",
-      title: `${t.line} reaches ${name(board)} ${inMin(m)}`,
-      sub: t.state === "scheduled" ? `Starts its run at ${hhmm(s[0].dep)}` : stopsAway > 0 ? `${stopsAway} stop${stopsAway > 1 ? "s" : ""} away` : "Approaching your stop",
+      title: t("{line} reaches {stop} {when}", { line: tr.line, stop: name(board), when: inMin(m) }),
+      sub: tr.state === "scheduled" ? t("Starts its run at {time}", { time: hhmm(s[0].dep) }) : stopsAway > 0 ? t(stopsAway > 1 ? "{n} stops away" : "1 stop away", { n: stopsAway }) : t("Approaching your stop"),
     };
   }
-  if (t.next <= alight && t.state !== "finished") {
-    if (t.atStop === alight) return { tone: "go", title: `At ${name(alight)}`, sub: "Get off here." };
-    const left = alight - t.next + 1;
-    const m = minutesUntil(s[alight].arr, t.delay);
+  if (tr.next <= alight && tr.state !== "finished") {
+    if (tr.atStop === alight) return { tone: "go", title: t("At {stop}", { stop: name(alight) }), sub: t("Get off here.") };
+    const left = alight - tr.next + 1;
+    const m = minutesUntil(s[alight].arr, tr.delay);
     return {
       tone: left <= 1 ? "go" : "ride",
-      title: left <= 1 ? `Next stop: ${name(alight)}` : `${left} stops to ${name(alight)}`,
-      sub: `Arrives ${hhmm(new Date(Date.parse(s[alight].arr) + (t.delay ?? 0) * 1000).toISOString())} (${inMin(m)})`,
+      title: left <= 1 ? t("Next stop: {stop}", { stop: name(alight) }) : t("{n} stops to {stop}", { n: left, stop: name(alight) }),
+      sub: t("Arrives {time} ({when})", { time: hhmm(new Date(Date.parse(s[alight].arr) + (tr.delay ?? 0) * 1000).toISOString()), when: inMin(m) }),
     };
   }
-  return { tone: "done", title: `Arrived at ${name(alight)}`, sub: "" };
+  return { tone: "done", title: t("Arrived at {stop}", { stop: name(alight) }), sub: "" };
 }
 
 export function TrackPanel({ journey, legIndex, leg, data, error, follow, onFollow, onPickLeg, auto, onStop }: Props) {
@@ -61,13 +62,13 @@ export function TrackPanel({ journey, legIndex, leg, data, error, follow, onFoll
     <section className="track-panel" aria-live="polite">
       <header className="track-head">
         <span className="live-pulse" aria-hidden />
-        <strong>Tracking live</strong>
-        <button className="btn sm" onClick={onStop}>Stop</button>
+        <strong>{t("Tracking live")}</strong>
+        <button className="btn sm" onClick={onStop}>{t("Stop")}</button>
       </header>
 
       {rides.length > 1 && (
-        <div className="track-steps" role="tablist" aria-label="Rides in this journey">
-          <button role="tab" aria-selected={auto} className={auto ? "on" : ""} onClick={() => onPickLeg(null)}>Auto</button>
+        <div className="track-steps" role="tablist" aria-label={t("Rides in this journey")}>
+          <button role="tab" aria-selected={auto} className={auto ? "on" : ""} onClick={() => onPickLeg(null)}>{t("Auto")}</button>
           {rides.map(({ l, k }) => (
             <button key={k} role="tab" aria-selected={!auto && k === legIndex} className={k === legIndex ? (auto ? "cur" : "on") : ""} onClick={() => onPickLeg(k)}>
               <ModeIcon mode={l.product ?? "bus"} size={14} />
@@ -85,8 +86,8 @@ export function TrackPanel({ journey, legIndex, leg, data, error, follow, onFoll
         </div>
       )}
 
-      {error && !data && <p className="err">{error}</p>}
-      {!data && !error && <p className="muted">Finding the vehicle…</p>}
+      {error && !data && <p className="err">{t(error)}</p>}
+      {!data && !error && <p className="muted">{t("Finding the vehicle…")}</p>}
 
       {st && data && (
         <>
@@ -95,9 +96,9 @@ export function TrackPanel({ journey, legIndex, leg, data, error, follow, onFoll
             {st.sub && <span className="sub">{st.sub}</span>}
           </div>
           <div className="track-meta">
-            <span className={`src ${data.source}`}>{SOURCE_TEXT[data.source]}</span>
-            {data.delay != null && <span className={data.delay >= 60 ? "late-txt" : "ok-txt"}>{data.delay >= 60 ? `${delayLabel(data.delay)} min late` : "On time"}</span>}
-            {!follow && <button className="btn sm" onClick={onFollow}>Re-center</button>}
+            <span className={`src ${data.source}`}>{t(SOURCE_TEXT[data.source])}</span>
+            {data.delay != null && <span className={data.delay >= 60 ? "late-txt" : "ok-txt"}>{data.delay >= 60 ? t("{delay} min late", { delay: delayLabel(data.delay) ?? "" }) : t("On time")}</span>}
+            {!follow && <button className="btn sm" onClick={onFollow}>{t("Re-center")}</button>}
           </div>
 
           {range && (
@@ -106,12 +107,12 @@ export function TrackPanel({ journey, legIndex, leg, data, error, follow, onFoll
                 if (i < range.board || i > range.alight) return null;
                 const passed = i < data.next && data.atStop !== i;
                 const here = data.atStop === i || (data.atStop == null && i === data.next);
-                const t = i === range.board ? s.dep : s.arr;
+                const at = i === range.board ? s.dep : s.arr;
                 return (
                   <li key={i} className={`${passed ? "passed" : ""} ${here ? "here" : ""} ${i === range.board || i === range.alight ? "end" : ""}`}>
-                    <span className="t">{hhmm(t)}{data.delay != null && data.delay >= 60 && !passed && <span className="late">{delayLabel(data.delay)}</span>}</span>
+                    <span className="t">{hhmm(at)}{data.delay != null && data.delay >= 60 && !passed && <span className="late">{delayLabel(data.delay)}</span>}</span>
                     <span className="dot" aria-hidden />
-                    <span className="name">{s.name}{i === range.board ? " · board" : i === range.alight ? " · get off" : ""}</span>
+                    <span className="name">{s.name}{i === range.board ? ` · ${t("board")}` : i === range.alight ? ` · ${t("get off")}` : ""}</span>
                   </li>
                 );
               })}
