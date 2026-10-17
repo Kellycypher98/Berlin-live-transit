@@ -15,6 +15,7 @@ import { MapPicker, PlacePins, FocusMode } from "./components/map/MapPicker";
 import { choiceToIso, defaultChoice, type TimeChoice } from "./components/search/TimePicker";
 import { useTracking, type Tracking } from "./hooks/useTracking";
 import { TrackedVehicle } from "./components/map/TrackedVehicle";
+import { pushSupport, startPushWatch, stopPushWatch } from "./lib/push";
 import { LoadingScreen } from "./components/layout/LoadingScreen";
 import { Tour, hasSeenTour, INSTALL_STEP } from "./components/onboarding/Tour";
 import { LocateButton } from "./components/nearby/LocateButton";
@@ -54,6 +55,27 @@ export function App() {
   const [tracking, setTracking] = useState<Tracking | null>(null);
   const [follow, setFollow] = useState(true);
   const tracked = useTracking(tracking);
+  // Notifications while the app is closed: the server follows the tracked journey
+  const [push, setPush] = useState<{ status: "off" | "starting" | "on" | "error"; id?: string; error?: string }>({ status: "off" });
+  const pushIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    // New journey or tracking stopped: end the previous server-side watch
+    if (pushIdRef.current) { stopPushWatch(pushIdRef.current); pushIdRef.current = null; }
+    setPush({ status: "off" });
+  }, [tracking?.journey]);
+  const enablePush = async () => {
+    if (!tracking) return;
+    setPush({ status: "starting" });
+    try {
+      const id = await startPushWatch(tracking.journey);
+      pushIdRef.current = id;
+      setPush({ status: "on", id });
+    } catch (e) {
+      const m = (e as Error).message;
+      setPush({ status: "error", error: m === "denied" ? "Notifications are blocked. Allow them in your browser settings." : m === "dismissed" ? "" : m });
+    }
+  };
+  const disablePush = () => { if (pushIdRef.current) stopPushWatch(pushIdRef.current); pushIdRef.current = null; setPush({ status: "off" }); };
   useEffect(() => setTracking(null), [fromKey, toKey]);
   const startTracking = (journeyIndex: number, leg: number | null) => {
     const j = result?.journeys[journeyIndex];
@@ -200,6 +222,7 @@ export function App() {
           follow, onFollow: () => setFollow(true), auto: tracking.leg === null,
           onPickLeg: (k: number | null) => { setTracking({ ...tracking, leg: k }); setFollow(true); },
           onStop: () => setTracking(null),
+          push: { ...push, support: pushSupport(), onEnable: enablePush, onDisable: disablePush },
         } : null}
         station={station}
         onCloseStation={() => setStation(null)}

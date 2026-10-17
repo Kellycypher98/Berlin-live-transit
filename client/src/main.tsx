@@ -16,7 +16,7 @@ createRoot(document.getElementById("root")!).render(
   </StrictMode>,
 );
 
-// Service worker (only in the built app): needed for "Install app" in Chrome / Android
-if (import.meta.env.PROD && "serviceWorker" in navigator) {
+// Service worker: needed for "Install app" in Chrome / Android and for journey notifications
+if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => { navigator.serviceWorker.register("/sw.js").catch(() => {}); });
 }

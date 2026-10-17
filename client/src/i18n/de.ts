@@ -236,4 +236,15 @@ export const de: Record<string, string> = {
   "Add to Home Screen": "Zum Home-Bildschirm",
   "Hide stops": "Halte ausblenden",
   "Show all {n} stops": "Alle {n} Halte zeigen",
+  // ---------- notifications ----------
+  "Notify me when the app is closed": "Benachrichtigen, wenn die App zu ist",
+  "Turning on…": "Wird eingeschaltet…",
+  "You'll get updates even with the app closed.": "Du bekommst Updates, auch wenn die App zu ist.",
+  "Turn off": "Ausschalten",
+  "For notifications on iPhone, add the app to your home screen first.": "Für Benachrichtigungen auf dem iPhone leg die App zuerst auf den Home-Bildschirm.",
+  "Notifications are blocked. Allow them in your browser settings.": "Benachrichtigungen sind blockiert. Erlaube sie in den Browser-Einstellungen.",
+  "Invalid push subscription.": "Ungültiges Benachrichtigungs-Abo.",
+  "This journey can't be followed.": "Diese Verbindung lässt sich nicht verfolgen.",
+  "Too many notifications from this network.": "Zu viele Benachrichtigungen aus diesem Netzwerk.",
+  "Too many people are being notified right now. Try again later.": "Gerade werden zu viele Personen benachrichtigt. Versuch es später noch mal.",
 };

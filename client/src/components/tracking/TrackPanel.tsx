@@ -4,6 +4,7 @@ import { boardAlight } from "../../hooks/useTracking";
 import { lineStyle } from "../../lib/lines";
 import { ModeIcon } from "../icons/modeIcons";
 import { t } from "../../i18n";
+import type { PushSupport } from "../../lib/push";
 
 type Props = {
   journey: Journey;
@@ -16,6 +17,7 @@ type Props = {
   onPickLeg: (k: number | null) => void;
   auto: boolean;
   onStop: () => void;
+  push?: { status: "off" | "starting" | "on" | "error"; error?: string; support: PushSupport; onEnable: () => void; onDisable: () => void };
 };
 
 const SOURCE_TEXT = { live: "Live position", delays: "Timetable + live delay", timetable: "Timetable estimate" } as const; // translated where shown
@@ -54,7 +56,7 @@ function status(leg: Leg, tr: TrackState) {
   return { tone: "done", title: t("Arrived at {stop}", { stop: name(alight) }), sub: "" };
 }
 
-export function TrackPanel({ journey, legIndex, leg, data, error, follow, onFollow, onPickLeg, auto, onStop }: Props) {
+export function TrackPanel({ journey, legIndex, leg, data, error, follow, onFollow, onPickLeg, auto, onStop, push }: Props) {
   const rides = journey.legs.map((l, k) => ({ l, k })).filter(x => x.l.mode === "transit");
   const st = leg && data ? status(leg, data) : null;
   const range = leg && data ? boardAlight(leg, data) : null;
@@ -106,6 +108,7 @@ export function TrackPanel({ journey, legIndex, leg, data, error, follow, onFoll
             {!follow && <button className="btn sm" onClick={onFollow}>{t("Re-center")}</button>}
           </div>
 
+          {push && <PushRow push={push} />}
           {range && (
             <button className="stops-toggle track-stops-toggle" onClick={() => setShowStops(v => !v)} aria-expanded={showStops}>
               {t(showStops ? "Hide stops" : "Show all {n} stops", { n: stopCount })} {showStops ? "▴" : "▾"}
@@ -131,5 +134,28 @@ export function TrackPanel({ journey, legIndex, leg, data, error, follow, onFoll
         </>
       )}
     </section>
+  );
+}
+
+/** "Notify me when the app is closed" — journey updates as notifications. */
+function PushRow({ push }: { push: NonNullable<Props["push"]> }) {
+  if (push.support === "unsupported") return null;
+  if (push.support === "install-first") return <p className="push-row muted small">🔔 {t("For notifications on iPhone, add the app to your home screen first.")}</p>;
+  if (push.support === "denied") return <p className="push-row muted small">🔕 {t("Notifications are blocked. Allow them in your browser settings.")}</p>;
+  if (push.status === "on") {
+    return (
+      <div className="push-row on">
+        <span>🔔 {t("You'll get updates even with the app closed.")}</span>
+        <button className="link-btn" onClick={push.onDisable}>{t("Turn off")}</button>
+      </div>
+    );
+  }
+  return (
+    <div className="push-row">
+      <button className="btn sm push-btn" onClick={push.onEnable} disabled={push.status === "starting"}>
+        🔔 {push.status === "starting" ? t("Turning on…") : t("Notify me when the app is closed")}
+      </button>
+      {push.status === "error" && push.error && <p className="err small">{t(push.error)}</p>}
+    </div>
   );
 }

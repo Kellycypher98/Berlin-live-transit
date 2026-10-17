@@ -23,7 +23,8 @@ import { buildLineMap } from "./lib/lines.js";
 import { matchCommunityLeg, trackTrip, trackCommunityTrip } from "./lib/tracking.js";
 import { searchPlaces, reversePlace } from "./lib/places.js";
 import { enhanceWalks } from "./lib/walk.js";
-import { trackRequest, count, trackConnection, recordTick, captureLogs, statsSnapshot, checkAdmin } from "./lib/stats.js";
+import { trackRequest, count, trackConnection, recordTick, captureLogs, statsSnapshot, checkAdmin, clientIp } from "./lib/stats.js";
+import { startPush } from "./lib/push.js";
 
 captureLogs();
 
@@ -195,6 +196,19 @@ async function track({ trip, day, hafas }) {
   return null;
 }
 
+// Notifications while the app is closed (Web Push): the server keeps following the journey
+const push = startPush({ track, log, contact: process.env.CONTACT || "" });
+
+/** Reads a small JSON request body (POST). */
+function readJson(req, limit = 32 * 1024) {
+  return new Promise((resolve, reject) => {
+    let size = 0; const chunks = [];
+    req.on("data", c => { size += c.length; if (size > limit) { reject(Object.assign(new Error("too large"), { status: 413 })); req.destroy(); } else chunks.push(c); });
+    req.on("end", () => { try { resolve(JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}")); } catch { reject(Object.assign(new Error("bad json"), { status: 400 })); } });
+    req.on("error", reject);
+  });
+}
+
 // ---------- official live delays ----------
 let rtBlockedUntil = 0;
 async function pollRealtime() {
@@ -272,6 +286,18 @@ const server = http.createServer(async (req, res) => {
     if (denied) return sendJson(res, denied[0], { error: denied[1] });
     res.setHeader("cache-control", "no-store");
     return sendJson(res, 200, adminStats());
+  }
+
+  if (path === "/api/push/key") return sendJson(res, 200, { key: push.publicKey });
+  if ((path === "/api/push/watch" || path === "/api/push/unwatch") && req.method === "POST") {
+    try {
+      const body = await readJson(req);
+      const [status, out] = path === "/api/push/watch" ? await push.watch(body, clientIp(req)) : push.unwatch(body);
+      if (status === 200 && path === "/api/push/watch") count("pushWatches");
+      return sendJson(res, status, out);
+    } catch (e) {
+      return sendJson(res, e.status ?? 400, { error: "Invalid request." });
+    }
   }
 
   if (path === "/api/vehicles") {
@@ -389,6 +415,7 @@ function adminStats() {
   for (const v of snapshot.vehicles) byMode[v.product] = (byMode[v.product] ?? 0) + 1;
   return statsSnapshot({
     clients: wss.clients.size,
+    push: push.stats(),
     vehicles: snapshot.vehicles.length,
     byMode,
     updatedAt: snapshot.updatedAt,

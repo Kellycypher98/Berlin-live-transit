@@ -10,7 +10,8 @@ type Stats = {
   memory: { rss: number; heapUsed: number };
   clients: number; peakClients: number; visitorsToday: number; connectionsTotal: number;
   vehicles: number; byMode: Record<string, number>; updatedAt: string | null;
-  counters: { journeys: number; journeysLive: number; journeysLocal: number; tracks: number; placeSearches: number };
+  counters: { journeys: number; journeysLive: number; journeysLocal: number; tracks: number; placeSearches: number; pushWatches?: number };
+  push?: { watching: number; sent: number; failed: number };
   routes: { route: string; count: number; errors: number; avgMs: number; maxMs: number }[];
   history: { t: number; live: number; delays: number; timetable: number; clients: number }[];
   logs: { t: number; level: "warn" | "error"; message: string }[];
@@ -187,6 +188,9 @@ function Dashboard({ s }: { s: Stats }) {
           <dt>· answered from timetable</dt><dd>{num(s.counters.journeysLocal)}</dd>
           <dt>Tracking requests</dt><dd>{num(s.counters.tracks)}</dd>
           <dt>Address searches</dt><dd>{num(s.counters.placeSearches)}</dd>
+          <dt>Notifications switched on</dt><dd>{num(s.counters.pushWatches ?? 0)}</dd>
+          {s.push && <><dt>· journeys followed now</dt><dd>{num(s.push.watching)}</dd>
+          <dt>· notifications sent / failed</dt><dd>{num(s.push.sent)} / {num(s.push.failed)}</dd></>}
         </dl>
       </section>
 
