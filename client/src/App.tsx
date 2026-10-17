@@ -16,6 +16,7 @@ import { choiceToIso, defaultChoice, type TimeChoice } from "./components/search
 import { useTracking, type Tracking } from "./hooks/useTracking";
 import { TrackedVehicle } from "./components/map/TrackedVehicle";
 import { LoadingScreen } from "./components/layout/LoadingScreen";
+import { Tour, hasSeenTour } from "./components/onboarding/Tour";
 import { LocateButton } from "./components/nearby/LocateButton";
 import { NearbyLayer } from "./components/nearby/NearbyLayer";
 import { nearestStations } from "./lib/nearby";
@@ -133,6 +134,18 @@ export function App() {
   const loc = useMyLocation();
   const near = useMemo(() => (loc.me && stations.length ? nearestStations(stations, loc.me) : []), [loc.me, stations]);
 
+  // First-use tour: once the map has loaded, unless it was seen before; can be replayed from the layers panel
+  const [tourOpen, setTourOpen] = useState(false);
+  const tourChecked = useRef(false);
+  const appReady = stations.length > 0 && !!snapshot?.updatedAt;
+  useEffect(() => {
+    if (!appReady || tourChecked.current) return;
+    tourChecked.current = true;
+    if (hasSeenTour()) return;
+    const timer = setTimeout(() => setTourOpen(true), 900); // after the loading screen has faded
+    return () => clearTimeout(timer);
+  }, [appReady]);
+
   const highlight = [from?.station, to?.station, station?.i].filter((x): x is number => x != null);
   const journey = tracking ? tracking.journey : !station ? result?.journeys?.[selected] ?? null : null;
 
@@ -195,8 +208,9 @@ export function App() {
       />
 
       <ControlPanel state={state} snapshot={snapshot} counts={counts} enabled={enabled} onToggle={toggle}
-        showLines={showLines} onShowLines={setShowLines} linesReady={mapLines.length > 0} />
+        showLines={showLines} onShowLines={setShowLines} linesReady={mapLines.length > 0} onTour={() => setTourOpen(true)} />
 
+      <Tour open={tourOpen} onClose={() => setTourOpen(false)} />
       <LoadingScreen state={state} snapshot={snapshot} stationsReady={stations.length > 0} linesReady={mapLines.length > 0} />
     </>
   );

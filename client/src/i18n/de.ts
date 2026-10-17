@@ -198,4 +198,31 @@ export const de: Record<string, string> = {
   "Timetable failed to load and live positions are down. Retrying…": "Fahrplan konnte nicht geladen werden und Live-Positionen fehlen. Neuer Versuch…",
   "Delay feed is empty right now": "Der Verspätungs-Feed ist gerade leer",
   "Not fetched yet": "Noch nicht abgerufen",
+
+  // ---------- first-use tour ----------
+  "Welcome to Berlin Live Transit": "Willkommen bei Berlin Live Transit",
+  "See every U-Bahn, S-Bahn, tram, bus and ferry in Berlin move on the map, live. Here's a 30-second tour.":
+    "Sieh jede U-Bahn, S-Bahn, Tram, jeden Bus und jede Fähre in Berlin live auf der Karte. Hier eine Tour in 30 Sekunden.",
+  "The vehicles": "Die Fahrzeuge",
+  "Each badge is a vehicle: U for U-Bahn, S for S-Bahn, plus tram, bus and ferry icons. The arrow shows where it's heading. Zoom in to see line numbers; tap a vehicle for its direction and delay.":
+    "Jedes Symbol ist ein Fahrzeug: U für U-Bahn, S für S-Bahn, dazu Tram, Bus und Fähre. Der Pfeil zeigt die Fahrtrichtung. Zoom hinein für die Liniennummern; tippe ein Fahrzeug an für Ziel und Verspätung.",
+  "Plan a journey": "Verbindung suchen",
+  "Type any address, place or station, or use your location. Pick when you want to leave or arrive, and you'll get connections with walking directions.":
+    "Gib eine Adresse, einen Ort oder eine Haltestelle ein oder nutze deinen Standort. Wähle, wann du los- oder ankommen willst, und du bekommst Verbindungen samt Fußwegen.",
+  "One tap shows the closest stops with walking times. Tap a stop for its next departures.":
+    "Ein Tipp zeigt die nächsten Haltestellen mit Gehzeit. Tippe eine Haltestelle an für die nächsten Abfahrten.",
+  "Track your ride live": "Deine Fahrt live verfolgen",
+  "In any connection, tap \"Track this journey live\". The map follows your vehicle and tells you when to board and when to get off.":
+    "Tippe bei einer Verbindung auf „Diese Fahrt live verfolgen“. Die Karte folgt deinem Fahrzeug und sagt dir, wann du ein- und aussteigen musst.",
+  "Choose what you see": "Wähle, was du siehst",
+  "Switch transport types and the line map on or off, and change the language here.":
+    "Hier schaltest du Verkehrsmittel und das Liniennetz ein oder aus und wechselst die Sprache.",
+  "You'll find it in the search panel.": "Du findest es im Suchbereich.",
+  "Step {n} of {total}": "Schritt {n} von {total}",
+  "Skip": "Überspringen",
+  "Back": "Zurück",
+  "Next": "Weiter",
+  "Show me": "Los geht's",
+  "Got it": "Verstanden",
+  "How it works": "So funktioniert's",
 };

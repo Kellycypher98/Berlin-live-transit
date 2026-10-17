@@ -14,9 +14,10 @@ type Props = {
   showLines: boolean;
   onShowLines: (v: boolean) => void;
   linesReady: boolean;
+  onTour: () => void;
 };
 
-export function ControlPanel({ state, snapshot, counts, enabled, onToggle, showLines, onShowLines, linesReady }: Props) {
+export function ControlPanel({ state, snapshot, counts, enabled, onToggle, showLines, onShowLines, linesReady, onTour }: Props) {
   const { t, lang, setLang } = useLang();
   const vehiclesText = (n: number) => t(n === 1 ? "1 vehicle" : "{n} vehicles", { n });
   let status: string;
@@ -85,6 +86,7 @@ export function ControlPanel({ state, snapshot, counts, enabled, onToggle, showL
           </li>
         </ul>
       )}
+      <button type="button" className="tour-replay" onClick={onTour}>{t("How it works")}</button>
       <div className="lang-switch" role="radiogroup" aria-label={t("Language")}>
         <span className="lang-label">{t("Language")}</span>
         {LANGS.map(l => (

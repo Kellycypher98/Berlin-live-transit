@@ -443,3 +443,35 @@ body { background: var(--bg); color: var(--fg); font-family: var(--font); font-f
 }
 .lang-switch button.on { color: var(--fg); border-color: var(--line); background: color-mix(in srgb, var(--fg) 6%, transparent); }
 .lang-switch button:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+
+/* ---------- first-use tour ---------- */
+.tour { position: fixed; inset: 0; z-index: 2500; }
+.tour-dim { position: absolute; inset: 0; background: rgb(10 15 20 / .55); }
+.tour-spot {
+  position: absolute; border-radius: 12px; pointer-events: none;
+  box-shadow: 0 0 0 9999px rgb(10 15 20 / .55), 0 0 0 3px #fff;
+  transition: left .25s ease, top .25s ease, width .25s ease, height .25s ease;
+}
+.tour-card {
+  position: absolute; width: min(340px, calc(100vw - 24px)); box-sizing: border-box;
+  display: grid; gap: 8px; padding: 16px; border-radius: 14px;
+  background: var(--panel); backdrop-filter: blur(10px); border: 1px solid var(--line);
+  box-shadow: 0 12px 32px rgb(0 0 0 / .25); color: var(--fg);
+  animation: tour-in .2s ease;
+}
+@keyframes tour-in { from { opacity: 0; transform: translateY(6px); } }
+.tour-card h2 { margin: 0; font: 700 18px/1.25 var(--font); }
+.tour-card p { margin: 0; font-size: 14px; line-height: 1.45; color: var(--fg); }
+.tour-card p.muted { color: var(--muted); }
+.tour-logo { border-radius: 10px; }
+.tour-visual { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.tour-track { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line); font: 600 13px var(--font); }
+.tour-foot { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+.tour-dots { flex: 1; display: flex; gap: 5px; }
+.tour-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
+.tour-dots span.on { background: var(--fg); width: 16px; border-radius: 3px; }
+.tour-card .btn.primary { background: var(--fg); color: var(--bg); border-color: transparent; font-weight: 700; }
+.tour-replay { all: unset; cursor: pointer; font: 600 13px var(--font); color: var(--muted); padding-top: 2px; }
+.tour-replay:hover { color: var(--fg); text-decoration: underline; }
+.tour-replay:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; border-radius: 4px; }
+@media (prefers-reduced-motion: reduce) { .tour-spot { transition: none; } .tour-card { animation: none; } }
