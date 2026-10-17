@@ -1,0 +1,35 @@
+# Server on one machine (AWS Lightsail): the Node API + Caddy for HTTPS.
+# Started by setup.sh; settings come from deploy/.env (created by setup.sh, never committed).
+services:
+  api:
+    build: ..
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PORT: "3000"
+      TRUST_PROXY: "1"
+      # Measured: ~600 MB peak while the timetable is built, ~400 MB after (most of it outside the JS heap)
+      NODE_OPTIONS: "--max-old-space-size=512"
+    volumes:
+      - data:/app/data          # timetable + its index survive restarts and updates
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [api]
+    environment:
+      DOMAIN: ${DOMAIN}         # read from deploy/.env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data        # HTTPS certificates
+      - caddy_config:/config
+
+volumes:
+  data:
+  caddy_data:
+  caddy_config:

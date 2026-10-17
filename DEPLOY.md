@@ -1,54 +1,82 @@
-# Deploying: app on Netlify, server on Render
-
-Netlify only hosts static sites, and this app also needs a server that runs all the time: it keeps the
-VBB timetable in memory, polls the live feeds and pushes vehicles over a WebSocket. So it's split:
+# Deploying: app on Netlify, server on AWS Lightsail
 
 | Part | Where | What |
 |------|-------|------|
 | React app | **Netlify** | the map, search, `/admin` page |
-| Node server | **Render** (or any container host) | live data, journeys, tracking, WebSocket |
+| Node server | **AWS Lightsail**, 1 GB or more | live data, journeys, tracking, WebSocket |
 
-Netlify forwards `/api/*` to the server, so the browser only ever talks to your Netlify address –
-except the live WebSocket, which Netlify can't forward, so the app connects to the server for that directly.
+The server uses about 600 MB of memory while it builds the VBB timetable and about 400 MB afterwards,
+so the 1 GB plan is enough (the setup also adds 2 GB of swap as a safety margin). Netlify forwards `/api/*` to the server; the live WebSocket connects to it directly.
 
-## 1. Push the code to GitHub
+## 1. Push the code
 
 ```bash
-git add -A && git commit -m "Deploy setup" && git push
+git add -A && git commit -m "Lightsail deploy" && git push
 ```
 
-## 2. Server on Render
+The setup below downloads the code from GitHub, so the repo has to be public
+(GitHub → repo → Settings → General → Danger Zone → Change visibility).
 
-1. Sign in at render.com with GitHub → **New → Blueprint** → pick `Berlin-live-transit`.
-   It reads `render.yaml` and creates the service `berlin-live-api` from the `Dockerfile`.
-2. When asked, set `CONTACT` to your email (VBB asks for it). `ADMIN_TOKEN` is generated for you;
-   find it later under the service → **Environment**.
-3. Wait for the first deploy, then open `https://<your-service>.onrender.com/health`. It returns JSON
-   once it's running (the timetable takes a minute or two to load the first time).
-4. Copy that address: it's your `BACKEND_URL`.
+## 2. Create the server (Lightsail console, lightsail.aws.amazon.com)
 
-Free plan notes:
-- The server sleeps after 15 minutes without visitors; the next visitor waits about a minute for it to wake,
-  plus the timetable loading again (the free plan has no lasting disk). The app shows its loading screen meanwhile.
-- If it restarts while building the timetable, it's out of memory: switch the service to a paid plan with
-  at least 1 GB, or run the same `Dockerfile` on AWS Lightsail.
+1. **Create instance** → region **Frankfurt (eu-central-1)** → **Linux/Unix** → **OS Only** → **Ubuntu 24.04 LTS**.
+2. Plan: **1 GB memory** or larger. Name it `berlin-live-api` → **Create instance**.
+3. Open the instance → **Networking**:
+   - **Attach static IP** (create one; free while attached). The server's address is built from it.
+   - **IPv4 Firewall → Add rule → HTTPS** (port 443). HTTP (80) is already open; keep it, it's needed for the certificate.
 
-## 3. App on Netlify
+## 3. Install and start
 
-1. app.netlify.com → **Add new site → Import an existing project** → GitHub → `Berlin-live-transit`.
-   Netlify reads `netlify.toml` (base `client`, publish `dist`) – leave the build settings as they are.
-2. **Site configuration → Environment variables → Add**: `BACKEND_URL` = `https://<your-service>.onrender.com`
-   (no trailing slash).
-3. **Deploys → Trigger deploy**. The build stops with a clear message if `BACKEND_URL` is missing.
-4. Open your `*.netlify.app` address. Admin dashboard: `/admin`, signed in with the `ADMIN_TOKEN` from Render.
+Instance → **Connect using SSH** (opens a terminal in the browser), then paste, with your email:
 
-## 4. Your own domain (later)
+```bash
+curl -fsSL https://raw.githubusercontent.com/Kellycypher98/Berlin-live-transit/main/deploy/setup.sh | bash -s -- you@example.com
+```
 
-Netlify → **Domain management → Add a domain** you bought (any registrar). Netlify gives the DNS records
-to add and sets up HTTPS. The server can stay on its `onrender.com` address; visitors never see it.
+It installs Docker, adds swap, downloads the code, creates `deploy/.env` with a new admin token, and starts
+the server behind Caddy (HTTPS with a free certificate). At the end it prints:
+
+- the API address, e.g. `https://3-121-45-67.sslip.io` (built from your static IP, no domain needed)
+- your **admin token** (also saved in `~/berlin-live/deploy/.env` on the server)
+
+The first start takes a few minutes: building the image, downloading the timetable (~80 MB) and indexing it.
+Check `https://<that address>/health`, or watch: `cd ~/berlin-live/deploy && sudo docker compose logs -f api`.
+
+### Or on EC2 instead of Lightsail
+
+Same script, different console steps (EC2 → **Launch instance**, region Frankfurt):
+1. **Ubuntu Server 24.04**, instance type **t3.micro** (1 GB) or larger.
+2. Key pair: **create one** (downloads a `.pem` file). Storage: 20 GB gp3.
+3. Security group: allow **SSH** (from My IP), **HTTP** (80) and **HTTPS** (443) from anywhere → **Launch**.
+4. **Elastic IPs → Allocate → Associate** with the instance (so the address never changes).
+5. From your Mac: `chmod 400 ~/Downloads/<key>.pem && ssh -i ~/Downloads/<key>.pem ubuntu@<elastic-ip>`,
+   then paste the `curl … setup.sh` command from step 3 above. (Browser-based EC2 Instance Connect
+   needs SSH open to AWS's address range, not just your IP.)
+
+## 4. Point Netlify at it
+
+Netlify → **Site configuration → Environment variables** → `BACKEND_URL` = `https://3-121-45-67.sslip.io`
+(your address, no trailing slash) → **Deploys → Trigger deploy**.
+
+Then open your Netlify site; `/admin` takes the admin token from step 3.
+
+## Updating
+
+After pushing to GitHub, in the instance's SSH:
+
+```bash
+cd ~/berlin-live/deploy && ./update.sh
+```
+
+The timetable is kept in a Docker volume, so restarts take seconds instead of minutes.
+
+## Your own domain (later)
+
+- App: Netlify → **Domain management → Add a domain**; it shows the DNS records and sets up HTTPS.
+- API (optional): add an `A` record `api.yourdomain.de` → the static IP, set `DOMAIN=api.yourdomain.de` in
+  `~/berlin-live/deploy/.env`, run `./update.sh`, and change `BACKEND_URL` on Netlify.
 
 ## Before real traffic
 
-- Map tiles: move from openstreetmap.org tiles to a keyed provider (MapTiler, Stadia) – OSM's servers
-  aren't meant for public apps with real traffic.
-- If you change the server's address, update `BACKEND_URL` on Netlify and redeploy.
+- Map tiles: move from openstreetmap.org tiles to a keyed provider (MapTiler, Stadia).
+- Lightsail → instance → **Snapshots**: turn on automatic snapshots.

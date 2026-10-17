@@ -1,0 +1,11 @@
+# HTTPS for the API with a free certificate (renewed automatically).
+# DOMAIN is e.g. 3-121-45-67.sslip.io (works without buying a domain) or api.yourdomain.de.
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy api:3000
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		-Server
+	}
+}

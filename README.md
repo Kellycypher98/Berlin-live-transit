@@ -46,7 +46,7 @@ Requires Node 18+.
 
 ## Hosting
 
-App on Netlify, server on Render (or any container host): see [DEPLOY.md](DEPLOY.md).
+App on Netlify, server on AWS Lightsail (Docker + Caddy, files in `deploy/`): see [DEPLOY.md](DEPLOY.md).
 
 ## Languages
 
@@ -112,8 +112,9 @@ Three VBB sources, used per area of the map (Berlin is split into 16 areas), bes
    from the official GTFS-Realtime feed (polled every 30 s). Cancelled trips are hidden.
 3. **Timetable only** — when both live feeds are down.
 
-- The timetable (~60–100 MB) downloads into `data/` on first start, gets indexed (a minute or two)
-  and cached, so restarts take about a second. Re-downloaded every 3 days.
+- The timetable (~80 MB) downloads into `data/` on first start, gets indexed (about half a minute) and cached
+  in a compact binary file (~45 MB), so restarts take well under a second. Re-downloaded every 3 days.
+  Memory: ~600 MB peak while indexing, ~400 MB while running. Of yesterday's trips only the late ones are kept.
 - Live positions can show up before the timetable has finished loading.
 - Timetable-based vehicles move along the real track (GTFS shapes): each trip's stops are
   projected onto its shape once, then positions are interpolated along it. Trips without a
@@ -138,7 +139,7 @@ Three VBB sources, used per area of the map (Berlin is split into 16 areas), bes
 | `RADAR`       | set to `off` to use only the official feeds      |
 | `PHOTON_URL`  | `https://photon.komoot.io` (address search fallback) |
 | `WALK_ROUTER_URL` | `https://routing.openstreetmap.de/routed-foot` (walking routes) |
-| `TRUST_PROXY` | set to `1` behind a host's proxy (Render, Fly) so visitor counts use real addresses |
+| `TRUST_PROXY` | set to `1` behind a proxy (Caddy, Render, Fly) so visitor counts use real addresses |
 | `ADMIN_TOKEN` | unset = admin dashboard only from localhost |
 | `CONTACT`     | your email or URL, sent in the User-Agent (VBB asks for this and blocks generic clients) |
 

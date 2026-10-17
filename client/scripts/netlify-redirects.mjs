@@ -6,7 +6,7 @@ import { writeFileSync } from "node:fs";
 
 const backend = (process.env.BACKEND_URL ?? "").replace(/\/+$/, "");
 if (!/^https:\/\/[^/]+$/.test(backend)) {
-  console.error("BACKEND_URL must be set to the server's https address, e.g. https://berlin-live-api.onrender.com");
+  console.error("BACKEND_URL must be set to the server's https address, e.g. https://3-121-45-67.sslip.io");
   process.exit(1);
 }
 writeFileSync(new URL("../dist/_redirects", import.meta.url), [

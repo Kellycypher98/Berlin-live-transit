@@ -1,5 +1,5 @@
 # Backend only: live data, journeys, tracking (the React app is hosted on Netlify).
-# Works on Render, Fly.io, Railway, AWS Lightsail/App Runner – anything that runs a container.
+# Runs on AWS Lightsail via deploy/docker-compose.yml (or any container host with 2 GB+ memory).
 FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production PORT=3000
